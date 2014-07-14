@@ -210,7 +210,7 @@ void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int Rz
 	// Avgerage last 20 sample
 
 
-/*
+
 	int16_t AccXA[20],AccYA[20],AccZA[20],GyroXA[20],GyroYA[20],GyroZA[20];
 
 	AccXA[movavgcounter]=RxAccR;
@@ -227,29 +227,29 @@ void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int Rz
 
 	}
 
-	//RxAccR=totalx/10.0;
-	//RyAccR=totaly/10.0;
-	//RzAccR=totalz/10.0;
+	RxAccR=totalx/10.0;
+	RyAccR=totaly/10.0;
+	RzAccR=totalz/10.0;
 	totalx=0;totaly=0;totalz=0;
 
 	movavgcounter=movavgcounter+1;
-	//end Avergae last 20 sample
-*/
+//end Avergae last 20 sample
+
 	RxGyroR=((float)RxGyro0)/131;
 	RyGyroR=((float)RyGyro0)/131;
 	RzGyroR=((float)RzGyro0)/131;
-	//--up to here from eginning is 10us----
+//--up to here from eginning is 10us----
 	RaccModulus=sqrt((RxAccR*RxAccR)+(RyAccR*RyAccR)+(RzAccR*RzAccR));
 	RxAcc=RxAccR/RaccModulus;
 	RyAcc=RyAccR/RaccModulus;
 	RzAcc=RzAccR/RaccModulus;
-	//AccAngleX,AccAngleY;
+//AccAngleX,AccAngleY;
 
 	AccAngleX=acos(RxAcc)*180/PI-90;
 	AccAngleY=acos(RyAcc)*180/PI-90;
 	//--up to here from eginning is 600us----
 	 GPIOD->BSRRH = 0xF000; // reset PD1
-	 //
+//
     if(T==0){  //time is 0, first data point , define REst at 0 time.
 	   RxEstpast= RxAcc;
 	   RyEstpast= RyAcc;
