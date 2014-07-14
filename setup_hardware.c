@@ -463,7 +463,7 @@ void MPUIni_init16(void)
 	Delay(20);
 	MPU9150_writeSensor(MPU9150_ACCEL_CONFIG, 0x04); //+-8G 0.63Hz
     Delay(20);
-    MPU9150_writeSensor(MPU9150_GYRO_CONFIG, 0x04); //+/1 500 deg per sec
+    MPU9150_writeSensor(MPU9150_GYRO_CONFIG, 0x00); //+/1 500 deg per sec
      Delay(20);
 
 }
