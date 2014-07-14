@@ -39,16 +39,19 @@ int XErrbuf;
 //Rate PID PG=4.2 , D=7 , Kp=0.9 ,IGain=0
 //best value pG=5.2 Dgain=7.2 , Kp=0.8 , Ki=0.005
 
-#define Logbuf 10 //
-float PGain=4.7,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight,ErrorH=0,GH=0.0005;
-float IGain=0.0,Dgain=7.2,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
+//high trottle gain
+//Pagin =4.6, Xgain =7 ,
+int manualradio=14000;
+#define Logbuf 500 //
+float PGain=2,PgainX=2.8,ErrorX=0,ErrorY=0,setX=25,setY=0,setheight,ErrorH=0,GH=0.0005;
+float IGain=0,Dgain=2.0,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
-float RateYPG=0.8,RateYDG=0,RateYIG=0.005,SetYRate=5;
+float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5;
 float PreviousErrRateY,ErrRateY,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY;
 float PIDRateY;
 
 
-float RateXPG=0.8,RateXDG=0,RateXIG=0.005,SetXRate=5;
+float RateXPG=0.8,RateXDG=0,RateXIG=0,SetXRate=5;
 float PreviousErrRateX,ErrRateX,DiffErrRateX,IntErrRateX,PtermRateX,DtermRateX,ItermRateX;
 float PIDRateX;
 
@@ -94,7 +97,15 @@ float Dtermx[Logbuf];
 float Itermx[Logbuf];
 float PIDx[Logbuf];
 float Radioinx[Logbuf];
+float CurrentX[Logbuf];
 int PID_Start=0;
+
+
+
+float m1m3_rpm,m2m4_rpm,average_rpm,m1Rcompensate,m2Rcompensate,m3Rcompensate,m4Rcompensate;
+float M1Radio_in,M2Radio_in,M3Radio_in,M4Radio_in;
+
+
 //end Radio status state machine
 void PWMinput_radioCH3(void);
 void radio_in(void);
@@ -170,6 +181,8 @@ float squaredz(float x){
   return x*x;
 }
 void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int RzGyro0){
+	    GPIOD->BSRRL = 0xF000; // set PD1
+
 
 	float RaccModulus,RaccNormalize,Axz,Ayz,SignRzGyro;
 	float 	RxAcc,RyAcc,RzAcc,RxGyro,RyGyro,RzGyro;
@@ -178,6 +191,8 @@ void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int Rz
 	float Wgyro=10.0;
 	int i,j;
 	float totalx=0.0,totaly=0.0,totalz=0.0;
+
+
 	RxAccR=(((float)RxAcc0))/4096;
 	RyAccR=(((float)RyAcc0))/4096;
 	RzAccR=(((float)RzAcc0))/4096;
@@ -188,8 +203,9 @@ void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int Rz
 	// Avgerage last 20 sample
 
 
+/*
+	int16_t AccXA[20],AccYA[20],AccZA[20],GyroXA[20],GyroYA[20],GyroZA[20];
 
-	//int16_t AccXA[20],AccYA[20],AccZA[20],GyroXA[20],GyroYA[20],GyroZA[20];
 	AccXA[movavgcounter]=RxAccR;
 	AccYA[movavgcounter]=RyAccR;
 	AccZA[movavgcounter]=RzAccR;
@@ -203,18 +219,19 @@ void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int Rz
 		totalz=AccZA[i]+totalz;
 
 	}
-//	RxAccR=totalx/10.0;
-//	RyAccR=totaly/10.0;
-//	RzAccR=totalz/10.0;
+
+	//RxAccR=totalx/10.0;
+	//RyAccR=totaly/10.0;
+	//RzAccR=totalz/10.0;
 	totalx=0;totaly=0;totalz=0;
 
 	movavgcounter=movavgcounter+1;
 	//end Avergae last 20 sample
-
-	RxGyroR=((float)RxGyro0)/65.5;
-	RyGyroR=((float)RyGyro0)/65.5;
-	RzGyroR=((float)RzGyro0)/65.5;
-
+*/
+	RxGyroR=((float)RxGyro0)/131;
+	RyGyroR=((float)RyGyro0)/131;
+	RzGyroR=((float)RzGyro0)/131;
+	//--up to here from eginning is 10us----
 	RaccModulus=sqrt((RxAccR*RxAccR)+(RyAccR*RyAccR)+(RzAccR*RzAccR));
 	RxAcc=RxAccR/RaccModulus;
 	RyAcc=RyAccR/RaccModulus;
@@ -223,7 +240,9 @@ void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int Rz
 
 	AccAngleX=acos(RxAcc)*180/PI-90;
 	AccAngleY=acos(RyAcc)*180/PI-90;
-
+	//--up to here from eginning is 600us----
+	 GPIOD->BSRRH = 0xF000; // reset PD1
+	 //
     if(T==0){  //time is 0, first data point , define REst at 0 time.
 	   RxEstpast= RxAcc;
 	   RyEstpast= RyAcc;
@@ -244,9 +263,9 @@ void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int Rz
 
 
     	AxzPast=atan2(RxEstpast,RzEstpast);
-    	Axz=AxzPast+RateAxz*0.01;//new angle based on Gyro data
+    	Axz=AxzPast+RateAxz*0.007;//new angle based on Gyro data
     	AyzPast=atan2(RyEstpast,RzEstpast);
-    	Ayz=AyzPast+RateAyz*0.01;
+    	Ayz=AyzPast+RateAyz*0.007;
 
 
     	if((cos(Axz)*(PI/180.0))>=0)
@@ -408,6 +427,19 @@ init_GPIO();
 
 
 
+    //	TIM_SetCompare1(TIM1, 9500); //M1 --3153 rpm
+   //  TIM_SetCompare2(TIM1, 9500); //M2 -- 1289 rpm
+   //  TIM_SetCompare3(TIM1, 9500); //M3 -- 3163 rpm
+  //   TIM_SetCompare4(TIM1, 9500); //M4 -- 3417 rpm
+
+
+ // 	TIM_SetCompare1(TIM1, 11000); //M1 --4812 rpm
+  //   TIM_SetCompare2(TIM1, 11000); //M2 -- 4475 rpm
+   //  TIM_SetCompare3(TIM1, 11000); //M3 -- 4747 rpm
+   //    TIM_SetCompare4(TIM1, 11000); //M4 --   rpm
+
+
+
 
 
 while(1){
@@ -426,20 +458,44 @@ if(serialflag==1){
 
 
 //RxGyroR
-
+//	M1Radio_in,M2Radio_in,M3Radio_in,M4Radio_in;
   //  serial_output("%c%d.%d,",Csign(RxAccR),C1(RxAccR),C2(RxAccR));
   //  serial_output("%c%d.%d,",Csign(RyAccR),C1(RyAccR),C2(RyAccR));
   //  serial_output("%c%d.%d,",Csign(RzAccR),C1(RzAccR),C2(RzAccR));
-   serial_output("%c%d.%d\t",Csign(M1),C1(M1),C2(M1));
-   serial_output("%c%d.%d\t",Csign(M2),C1(M2),C2(M2));
-   serial_output("%c%d.%d\t",Csign(M3),C1(M3),C2(M3));
-   serial_output("%c%d.%d\t",Csign(M4),C1(M4),C2(M4));
+	/*
+   serial_output("%c%d.%d\t",Csign(M1Radio_in),C1(M1Radio_in),C2(M1Radio_in));
+   serial_output("%c%d.%d\t",Csign(M2Radio_in),C1(M2Radio_in),C2(M2Radio_in));
+   serial_output("%c%d.%d\t",Csign(M3Radio_in),C1(M3Radio_in),C2(M3Radio_in));
+   serial_output("%c%d.%d\t",Csign(M4Radio_in),C1(M4Radio_in),C2(M4Radio_in));
+*/
+	   serial_output("%c%d.%d\t",Csign(M1),C1(M1),C2(M1));
+	   serial_output("%c%d.%d\t",Csign(M2),C1(M2),C2(M2));
+	   serial_output("%c%d.%d\t",Csign(M3),C1(M3),C2(M3));
+	   serial_output("%c%d.%d\t",Csign(M4),C1(M4),C2(M4));
 
- //  serial_output("RateY:%c%d.%d\t",Csign(RyGyroR),C1(RyGyroR),C2(RyGyroR));
- //  serial_output("Pterm:%c%d.%d\t",Csign(PtermRateY),C1(PtermRateY),C2(PtermRateY));
- //  serial_output("ErrRateY:%c%d.%d\t",Csign(ErrRateY),C1(ErrRateY),C2(ErrRateY));
-  // serial_output("PID:Y: %d,",PIDRateY);
+   serial_output("GyroX:\t%c%d.%d\t",Csign(RxGyroR),C1(RxGyroR),C2(RxGyroR));
+   serial_output("GyroXRAW:%c%d.%d\t",Csign(GyroXvalue),C1(GyroXvalue),C2(GyroXvalue));
+   serial_output("ErrRateX :\t%c%d.%d\t",Csign(ErrRateX),C1(ErrRateX),C2(ErrRateX));
+   serial_output("XAngle PID:\t%c%d.%d\t",Csign(pidx),C1(pidx),C2(pidx));
+   serial_output("XRatePID :\t%c%d.%d\t",Csign(PIDRateX),C1(PIDRateX),C2(PIDRateX));
 
+
+
+/*
+ *
+ *
+ *
+ * 	ErrRateX=pidx-RxGyroR;
+								 	PtermRateX=	ErrRateX*RateXPG;
+								 	DiffErrRateX=ErrRateX-PreviousErrRateX;
+								 	DtermRateX=DiffErrRateX*RateXDG;
+								 	IntErrRateX=IntErrRateX+ErrRateX;
+								 	ItermRateX=RateXIG*IntErrRateX;
+								 	PIDRateX=PtermRateX+DtermRateX+ItermRateX;
+ *
+ *
+ *
+ */
 
 
   // float RateYPG=200,RateYDG=0,RateYIG=50,SetYRate=-5;
@@ -457,7 +513,7 @@ if(serialflag==1){
   //  serial_output("%d,",M3);
   //  serial_output("%d,",M4);
  //   serial_output("%d,",sensorheight);
-    serial_output("Height %c%d.%d cm,",Csign(sensorheight),C1(sensorheight),C2(sensorheight));
+   // serial_output("Height %c%d.%d cm,",Csign(sensorheight),C1(sensorheight),C2(sensorheight));
    // serial_output("motor=%d,",StartMotor);
   //  serial_output("FlightMode=%d,",flightmode);
    //serial_output("%c%d.%d,",Csign(ErrorH),C1(ErrorH),C2(ErrorH));
@@ -473,21 +529,34 @@ if(serialflag==1){
   // serial_output("P:%c%d.%d\t",Csign(p_termx),C1(p_termx),C2(p_termx));
   // serial_output("I:%c%d.%d\t",Csign(i_termx),C1(i_termx),C2(i_termx));
   // serial_output("D:%c%d.%d\t",Csign(d_termx),C1(d_termx),C2(d_termx));
-  // serial_output("PID:%c%d.%d\t",Csign(pidx),C1(pidx),C2(pidx));
+  serial_output("Radio PWM:%c%d.%d\t",Csign(radioin),C1(radioin),C2(radioin));
  //   ErrorH=setheight
 
-    serial_output("ErrorH:%c%d.%d\t",Csign(ErrorH),C1(ErrorH),C2(ErrorH));
-    serial_output("setheight:%c%d.%d cm \t",Csign(setheight),C1(setheight),C2(setheight));
+  //  serial_output("ErrorH:%c%d.%d\t",Csign(ErrorH),C1(ErrorH),C2(ErrorH));
+  //  serial_output("setheight:%c%d.%d cm \t",Csign(setheight),C1(setheight),C2(setheight));
 
 
-  //  serial_output("Xangle= \t%c%d.%d\t",Csign(Axr),C1(Axr),C2(Axr));
+    serial_output("Xangle= \t%c%d.%d\t",Csign(Axr),C1(Axr),C2(Axr));
+
     serial_output("ErrX=\t%c%d.%d\t",Csign(ErrorX),C1(ErrorX),C2(ErrorX));
-    serial_output("ErrY=\t%c%d.%d\t",Csign(ErrorY),C1(ErrorY),C2(ErrorY));
- //   serial_output("SM:%d\t",StartMotor);
- //   serial_output("RS:%d\t",Radio_status);
 
-    serial_output("StableMode:%d\t",StableMode);
-    serial_output("FlightMode:%d\t",flightmode);
+  //  serial_output("Yangle= \t%c%d.%d\t",Csign(Ayr),C1(Ayr),C2(Ayr));
+  //  serial_output("ErrY=\t%c%d.%d\t",Csign(ErrorY),C1(ErrorY),C2(ErrorY));
+
+ //   serial_output("PIDRateY=\t%c%d.%d\t",Csign(PIDRateY),C1(PIDRateY),C2(PIDRateY));
+ //   serial_output("PIDRateX=\t%c%d.%d\t",Csign(PIDRateX),C1(PIDRateX),C2(PIDRateX));
+
+ //   serial_output("IntErrRateX=\t%c%d.%d\t",Csign(IntErrRateX),C1(IntErrRateX),C2(IntErrRateX));
+ //   serial_output("IntErrRateY=\t%c%d.%d\t",Csign(IntErrRateY),C1(IntErrRateY),C2(IntErrRateY));
+
+
+
+  //  PIDRateY+PIDRateX
+   serial_output("SM:%d\t",StartMotor);
+   serial_output("RS:%d\t",Radio_status);
+
+ //   serial_output("StableMode:%d\t",StableMode);
+ //   serial_output("FlightMode:%d\t",flightmode);
 
  //   serial_output("Radio=%c%d.%d\t",Csign(DutyCycle2_radio),C1(DutyCycle2_radio),C2(DutyCycle2_radio));
 
@@ -497,7 +566,7 @@ if(serialflag==1){
     //
 
 
-    serial_output("Ayr : %c%d.%d",Csign(Ayr),C1(Ayr),C2(Ayr));
+//    serial_output("Ayr : %c%d.%d",Csign(Ayr),C1(Ayr),C2(Ayr));
     //serial_output("%5d,",AccYvalue);
    // serial_output("#Est%f<",RyEst);
    // serial_output("%5d,",AccZvalue);
@@ -595,15 +664,34 @@ void radio_in(){
 
 	    {
 
+         //  radioin=manualradio;
 
-	    	//radioin=((DutyCycle2_radio-32941)/54.6)+490;
-	    	radioin=((DutyCycle2_radio-20000)/1.358)+8100;
-	    //	radioin=550.00;
-	    //	MXlimit=radioin*1.3;
-	    //	if(MXlimit>700){
-	    	//	MXlimit=700;
-	    	//}
-	     }
+	    radioin=((DutyCycle2_radio-20000)/1.358)+8100;
+
+       	m2m4_rpm=(-0.0002996819 *(radioin)*(radioin)) +7.5004877*(radioin) -40913.2314;
+                     		m1m3_rpm=(-0.0002740191*(radioin)*(radioin)) + 6.9107775322*(radioin) -37915.38407;
+                     		average_rpm=(m1m3_rpm+m2m4_rpm)/2.0;
+                     		m1Rcompensate=(average_rpm-m1m3_rpm)+average_rpm;
+                     		m2Rcompensate=(average_rpm-m2m4_rpm)+average_rpm;
+                     		m3Rcompensate=(average_rpm-m1m3_rpm)+average_rpm;
+                     		m4Rcompensate=(average_rpm-m2m4_rpm)+average_rpm;
+
+
+
+                     		M1Radio_in=((0.0001306929)*(m1Rcompensate*m1Rcompensate)) - (0.1127928036 *(m1Rcompensate)) + 8420.18897922;
+                     		M3Radio_in=((0.0001306929)*(m3Rcompensate*m3Rcompensate)) - (0.1127928036 *(m3Rcompensate)) + 8420.18897922;
+
+                     		M2Radio_in=(( 0.0001242078 )*(m2Rcompensate*m2Rcompensate)) - (0.1740771018*m2Rcompensate) + 8750.5685299;
+                     		M4Radio_in=(( 0.0001242078 )*(m4Rcompensate*m4Rcompensate)) - (0.1740771018*m4Rcompensate) + 8750.5685299;
+
+
+
+
+
+
+
+
+	    }
 
 	if(Radio_status==0){
 		StartMotor=0;
@@ -638,44 +726,24 @@ void ControlLoop(){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
           //--------Begin PID correction----------
 
-	/*
-		togglebit^=1;
-		       		  if(togglebit) GPIOD->BSRRL = 0xF000; // set PD1
-		       		  	//  wait a short period of time
-		       		  else GPIOD->BSRRH = 0xF000; // reset PD1
-		       		  */
 
-
-
-		 	//Delay(50000);
-		  //Delay(150000);
-		 	// Delay(150000);
-		 	// Delay(150000);
-		//serial_output("Reading Sensor\n");
-		 //int  result = snprintf(buf, SIZE, "%f", value);
 
 
 
 	 GyroXvalue=(MPU9150_readSensor(MPU9150_GYRO_XOUT_L,MPU9150_GYRO_XOUT_H));
 
 
-					GyroYvalue=(MPU9150_readSensor(MPU9150_GYRO_YOUT_L,MPU9150_GYRO_YOUT_H));
-					 GyroZvalue=(MPU9150_readSensor(MPU9150_GYRO_ZOUT_L,MPU9150_GYRO_ZOUT_H));
-					     //serial_output("GyroX=%5d ",GyroXvalue);
-					     //serial_output("GyroY=%5d ",GyroYvalue);
-					     //serial_output("GyroZ=%5d ",GyroZvalue);
+     GyroYvalue=(MPU9150_readSensor(MPU9150_GYRO_YOUT_L,MPU9150_GYRO_YOUT_H));
+     GyroZvalue=(MPU9150_readSensor(MPU9150_GYRO_ZOUT_L,MPU9150_GYRO_ZOUT_H));
+     AccXvalue=((MPU9150_readSensor(MPU9150_ACCEL_XOUT_L,MPU9150_ACCEL_XOUT_H)));//to convert to 2nd complement -128 to 128 instead of 0-256
+     AccYvalue=((MPU9150_readSensor(MPU9150_ACCEL_YOUT_L,MPU9150_ACCEL_YOUT_H)));//to convert to 2nd complement -128 to 128 instead of 0-256
+     AccZvalue=((MPU9150_readSensor(MPU9150_ACCEL_ZOUT_L,MPU9150_ACCEL_ZOUT_H)));//to convert to 2
+
+   //  GPIOD->BSRRL = 0xF000; // set PD1
+     fuseGyroAcc(AccXvalue,AccYvalue,AccZvalue,GyroXvalue,GyroYvalue,GyroZvalue);
+  //   GPIOD->BSRRH = 0xF000; // reset PD1
 
 
-					 	AccXvalue=((MPU9150_readSensor(MPU9150_ACCEL_XOUT_L,MPU9150_ACCEL_XOUT_H)));//to convert to 2nd complement -128 to 128 instead of 0-256
-					 //	Delay(50000);
-					// 	AccXvalue=(signed char)AccXvalue;
-					     AccYvalue=((MPU9150_readSensor(MPU9150_ACCEL_YOUT_L,MPU9150_ACCEL_YOUT_H)));//to convert to 2nd complement -128 to 128 instead of 0-256
-					 //	Delay(50000);
-					 	AccZvalue=((MPU9150_readSensor(MPU9150_ACCEL_ZOUT_L,MPU9150_ACCEL_ZOUT_H)));//to convert to 2
-
-
-
-					 	fuseGyroAcc(AccXvalue,AccYvalue,AccZvalue,GyroXvalue,GyroYvalue,GyroZvalue);
 
 
 
@@ -688,7 +756,58 @@ void ControlLoop(){
 		   ErrorY=setY-Ayr;
 		 //  ErrorH=setheight-DutyCycle2;
 
+           if( (flightmode==1)){
+        	   int k;
+        	   	            	float sampletime=0;
+        	   	            	  StartMotor=0;
+        	   	            		            	TIM_SetCompare1(TIM1, 8100);
+        	   	            		            	TIM_SetCompare2(TIM1, 8100);
+        	   	            		            	TIM_SetCompare3(TIM1, 8100);
+        	   	            		            	TIM_SetCompare4(TIM1, 8100);
+        	   	            		            	TIM_Cmd(TIM2, DISABLE);
+        	   	            		            	 for(k=0;k<500;k++){
 
+        	   	            		            			                sampletime=k;
+        	   	            		            			                serial_output("%d\t",k);
+        	   	            		            			             Delay(5000);
+        	   	            		            			                serial_output("Rin:\t%c%d.%d\t",Csign(Radioinx[k]),C1(Radioinx[k]),C2(Radioinx[k]));
+        	   	            		            			             Delay(10000);
+        	   	            		            			          serial_output("CurrentX:\t%c%d.%d\t",Csign(CurrentX[k]),C1(CurrentX[k]),C2(CurrentX[k]));
+        	   	            		            			                 	   	            		            			             Delay(10000);
+
+
+        	   	            		            			                serial_output("M1\t%c%d.%d\t",Csign(M1x[k]),C1(M1x[k]),C2(M1x[k]));
+        	   	            		            			             Delay(10000);
+        	   	            		            			                serial_output("M2\t%c%d.%d\t",Csign(M2x[k]),C1(M2x[k]),C2(M2x[k]));
+        	   	            		            			             Delay(10000);
+        	   	            		            			                serial_output("M3\t%c%d.%d\t",Csign(M3x[k]),C1(M3x[k]),C2(M3x[k]));
+        	   	            		            			             Delay(10000);
+        	   	            		            			                serial_output("M4\t%c%d.%d\t",Csign(M4x[k]),C1(M4x[k]),C2(M4x[k]));
+        	   	            		            			             Delay(10000);
+        	   	            		            				           serial_output("P\t%c%d.%d\t",Csign(Ptermx[k]),C1(Ptermx[k]),C2(Ptermx[k]));
+        	   	            		            				        Delay(5000);
+        	   	            		            				           serial_output("D\t%c%d.%d\t",Csign(Dtermx[k]),C1(Dtermx[k]),C2(Dtermx[k]));
+        	   	            		            				        Delay(5000);
+        	   	            		            				           serial_output("PID:\t\t%c%d.%d\t",Csign(PIDx[k]),C1(PIDx[k]),C2(PIDx[k]));
+        	   	            		            				        Delay(5000);
+        	   	            		            				     serial_output("SetX:\t\t%c%d.%d\t",Csign(setX),C1(setX),C2(setX));
+        	   	            		            				          // serial_output("Set\t\t%c%d.%d\t",Csign(setX),C1(setX),C2(setX));
+        	   	            		            				        Delay(5000);
+        	   	            		            				     serial_output("PGain:\t\t%c%d.%d\t",Csign(PGain),C1(PGain),C2(PGain));
+        	   	            		            				        //   serial_output("PG\t\t%c%d.%d\t",Csign(PGain),C1(PGain),C2(PGain));
+        	   	            		            				        Delay(5000);
+        	   	            		            				     //      serial_output("DG\t\t%c%d.%d\t",Csign(Dgain),C1(Dgain),C2(Dgain));
+        	   	            		            				        serial_output("Dgain:\t\t%c%d.%d\t",Csign(Dgain),C1(Dgain),C2(Dgain));
+        	   	            		            				        Delay(5000);
+        	   	            		            				           serial_output("Err\t%c%d.%d\t",Csign( XErrbuffer[k]),C1(XErrbuffer[k]),C2(XErrbuffer[k]));
+
+        	   	            		            				           serial_output("\n");
+
+        	   	            			                }
+
+
+
+           }
 
 		   if((Radio_status==1)){
 
@@ -701,21 +820,43 @@ void ControlLoop(){
 
 							   }
 
+//----------------------compenstae unbalance CW and CCW -------------------------
+								float check;
+								check=(M1Radio_in+M3Radio_in+M2Radio_in+M4Radio_in)/4.0;
+						                     		  if((check>MXlimit) ||  (check<MNlimit)){
+						                     			 M1Radio_in=radioin;
+						                     			 M2Radio_in=radioin;
+						                     			 M3Radio_in=radioin;
+						                     			 M4Radio_in=radioin;
+
+
+						                     		       }
+						                     		// if((radioin>12000)){
+						                     								                     			M1Radio_in=radioin;
+						                     								                     			M2Radio_in=radioin;
+						                     								                     			M3Radio_in=radioin;
+						                     								                     			M4Radio_in=radioin;
+
+
+						                     								                     		       //}
 
 
 
+//----------------------End xx compenstae unbalance CW and CCW -------------------------
 
-								err_diffX=(ErrorX-PreviousErrX)/0.07;
+
+
+								err_diffX=(ErrorX-PreviousErrX)/0.02;
 								int_errX=int_errX + ErrorX;
 
+//----------------------------------------------------------------
 
-
-								p_termx=PGain*ErrorX;  //2.4
+								p_termx=PgainX*ErrorX;  //2.4
 								i_termx=IGain*int_errX;
 								d_termx=(Dgain*err_diffX);
 								pidx=p_termx+d_termx+i_termx;
 								PreviousErrX=ErrorX;
-
+//--------------------------------------------------------------
 								err_diffY=ErrorY-PreviousErrY;
 								int_errY=int_errY + ErrorY;
 								p_termy=PGain*ErrorY;
@@ -735,8 +876,8 @@ void ControlLoop(){
 																 }
 
 
-								 if((ErrorY<2) && (ErrorY>-2)) {int_errY=0; }
-								 if((ErrorX<2) && (ErrorX>-2)) {int_errX=0; }
+								 if((ErrorY<2) && (ErrorY>-2)) {int_errY=0;IntErrRateY=0; }
+								 if((ErrorX<2) && (ErrorX>-2)) {int_errX=0; IntErrRateX=0;}
 
 								 if(StableMode==1){
 
@@ -751,10 +892,7 @@ void ControlLoop(){
 
 
 //----------------- Temp disable to test Rate Gyro------------------------------------------------------------------------
-
-							//	 RatePIDY
-
-
+						//RatePIDY
 								    ErrRateY=pidy-RyGyroR;
 								 	PtermRateY=	ErrRateY*RateYPG;
 								 	DiffErrRateY=ErrRateY-PreviousErrRateY;
@@ -764,10 +902,7 @@ void ControlLoop(){
 								 	PIDRateY=PtermRateY+DtermRateY+ItermRateY;
 						   //End Rate PID Y
 
-
-								 	//	 RatePIDX
-
-
+						  //	 RatePIDX
 								 	ErrRateX=pidx-RxGyroR;
 								 	PtermRateX=	ErrRateX*RateXPG;
 								 	DiffErrRateX=ErrRateX-PreviousErrRateX;
@@ -775,7 +910,7 @@ void ControlLoop(){
 								 	IntErrRateX=IntErrRateX+ErrRateX;
 								 	ItermRateX=RateXIG*IntErrRateX;
 								 	PIDRateX=PtermRateX+DtermRateX+ItermRateX;
-								    //End Rate PID XY
+						 //    End Rate PID XY
 
 
 						//		M2=radioin+PIDRateY;//;//+(GH*ErrorH); -pidx
@@ -784,8 +919,18 @@ void ControlLoop(){
 
 						//		M1=radioin-PIDRateY;//;//+(GH*ErrorH);+(GH*ErrorH); +pidx
 						//		M4=radioin-PIDRateY;//;//+(GH*ErrorH);+(GH*ErrorH); +pidx
+								 if(flightmode==0){
 
-									 if(flightmode==1){
+									   M2= M2Radio_in+pidx;//;//+PIDRateY
+									   M1= M1Radio_in+pidx;//;//-PIDRateY
+                                      //---------------XASIS -----------------------------------
+									   M3= M3Radio_in-(pidx);//;//+PIDRateY
+									   M4= M4Radio_in-(pidx);//;//-PIDRateY
+
+								 }
+
+
+                                    if(flightmode==1){
 
 										ErrorH=setheight-sensorheight;
 										err_diffH=(ErrorH-PreviousErrH)/0.07;
@@ -803,16 +948,10 @@ void ControlLoop(){
 
 
 																 }
-									 if(flightmode==0){
-										   M2=radioin+PIDRateY-PIDRateX;//;//+(GH*ErrorH); -pidx
-										   M3=radioin+PIDRateY+PIDRateX;//;//+(GH*ErrorH);+(GH*ErrorH); -pidx
 
 
-										   M1=radioin-PIDRateY-PIDRateX;//;//+(GH*ErrorH);+(GH*ErrorH); +pidx
-										   M4=radioin-PIDRateY+PIDRateX;//;//+(GH*ErrorH);+(GH*ErrorH); +pidx
 
 
-									 }
 
 //----------------- End Temp disable to test Rate Gyro------------------------------------------------------------------------
 			   //--------End PID correction----------
@@ -849,44 +988,17 @@ void ControlLoop(){
 						M4x[XErrbuf]=M4;
 
 						 Ptermx[XErrbuf]=p_termx;
-										 Dtermx[XErrbuf]=d_termx;
+						Dtermx[XErrbuf]=d_termx;
 										 Itermx[XErrbuf]=i_termx;
-										 PIDx[XErrbuf]=pidx;
+										 PIDx[XErrbuf]=PIDRateX;
 										 Radioinx[XErrbuf]=radioin;
-					//XErrbuf=XErrbuf+1;
+										 CurrentX[XErrbuf]=Axr;
+					XErrbuf=XErrbuf+1;
 					}
 
 	            else
 	            {
-	            	int k;
-	            	float sampletime=0;
-	                StartMotor=0;
-	            	TIM_SetCompare1(TIM1, 450);
-	            	TIM_SetCompare2(TIM1, 450);
-	            	TIM_SetCompare3(TIM1, 450);
-	            	TIM_SetCompare4(TIM1, 450);
-	            	TIM_Cmd(TIM2, DISABLE);
-	            	 for(k=0;k<500;k++){
 
-	            			                sampletime=k;
-	            			                serial_output("%d\t",k);
-
-	            			                serial_output("Rin:\t%c%d.%d\t",Csign(Radioinx[k]),C1(Radioinx[k]),C2(Radioinx[k]));
-	            			                serial_output("%c%d.%d\t",Csign(M1x[k]),C1(M1x[k]),C2(M1x[k]));
-	            				            serial_output("%c%d.%d\t",Csign(M2x[k]),C1(M2x[k]),C2(M2x[k]));
-	            				            serial_output("%c%d.%d\t",Csign(M3x[k]),C1(M3x[k]),C2(M3x[k]));
-	            				            serial_output("%c%d.%d\t",Csign(M4x[k]),C1(M4x[k]),C2(M4x[k]));
-
-	            				           serial_output("P\t%c%d.%d\t",Csign(Ptermx[k]),C1(Ptermx[k]),C2(Ptermx[k]));
-	            				           serial_output("D\t%c%d.%d\t",Csign(Dtermx[k]),C1(Dtermx[k]),C2(Dtermx[k]));
-	            				           serial_output("PID:\t\t%c%d.%d\t",Csign(PIDx[k]),C1(PIDx[k]),C2(PIDx[k]));
-	            				           serial_output("Set\t\t%c%d.%d\t",Csign(setX),C1(setX),C2(setX));
-	            				           serial_output("PG\t\t%c%d.%d\t",Csign(PGain),C1(PGain),C2(PGain));
-	            				           serial_output("DG\t\t%c%d.%d\t",Csign(Dgain),C1(Dgain),C2(Dgain));
-	            				            serial_output("Err\t%c%d.%d\t",Csign( XErrbuffer[k]),C1(XErrbuffer[k]),C2(XErrbuffer[k]));
-	            				            serial_output("\n");
-
-	            			                }
 
 	            }
 
@@ -916,20 +1028,37 @@ void TIM2_IRQHandler()
         	timercount=5000;
         }
 
-        if(timercount%100==0){
+        if(timercount%50==0){
         	serialflag=1;
         }
-        if(timercount%10==0)
+
+        if(timercount%3==0){
+
+
+
+
+        }
+        if(timercount%20==0)
               {
         	radio_in();
               	conttrolflag=1;
+
+              	if(Radio_status==1){
+
+
+              	//	m2m4_rpm=(0.0001*(radioin)*(radioin)) - 0.1741*(radioin) + 8610.6;
+              	//	m1m3_rpm=(0.0001*(radioin)*(radioin)) -0.1128*(radioin) +8553.2;
+
+
+
+              	}
+
               }
 
-        if((timercount%12==0) & (timercount>5000)){
-        	GPIOD->BSRRL = 0xF000; // set PD1
+        if((timercount%7==0) & (timercount>5000)){
+        //	GPIOD->BSRRL = 0xF000; // set PD1
         	ControlLoop();
-
-		 	 GPIOD->BSRRH = 0xF000; // reset PD1
+		// 	 GPIOD->BSRRH = 0xF000; // reset PD1
         }
 
 
@@ -939,10 +1068,10 @@ void TIM2_IRQHandler()
                      }
 
         if(timercount%10000==0){
-             // 	 setY=20;
+  //           	 setY=20;
                }
                if(timercount%20000==0){
-             //    setY=-20.0;
+    //            setY=0;
                 }
 
                if(timercount%30000==0){
