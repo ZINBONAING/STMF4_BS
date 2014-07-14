@@ -13,11 +13,18 @@
 #include <math.h>
 #include "stm32f4xx_tim.h"
 #include <stm32f4xx_it.h>
+// Update Result here ---
+
+//X Result starts to shows stable [ currently using RatePID]
+
+// End update resilt here.---
+
+
+
 #define SERIAL_BUFFER_SIZE 512
 char serial_buffer[SERIAL_BUFFER_SIZE] ;
 int sb_index = 0 ;
 int end_index = 0 ;
-
 int togglebit=0;
 int timercount=0;
 int his_timercount=0;
@@ -43,8 +50,8 @@ int XErrbuf;
 //Pagin =4.6, Xgain =7 ,
 int manualradio=14000;
 #define Logbuf 500 //
-float PGain=2,PgainX=2.8,ErrorX=0,ErrorY=0,setX=25,setY=0,setheight,ErrorH=0,GH=0.0005;
-float IGain=0,Dgain=2.0,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
+float PGain=2,PgainX=2.9,ErrorX=0,ErrorY=0,setX=-25,setY=0,setheight,ErrorH=0,GH=0.0005;
+float IGain=0,Dgain=3.5,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
 float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5;
 float PreviousErrRateY,ErrRateY,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY;
@@ -921,11 +928,11 @@ void ControlLoop(){
 						//		M4=radioin-PIDRateY;//;//+(GH*ErrorH);+(GH*ErrorH); +pidx
 								 if(flightmode==0){
 
-									   M2= M2Radio_in+pidx;//;//+PIDRateY
-									   M1= M1Radio_in+pidx;//;//-PIDRateY
+									   M2= M2Radio_in+PIDRateX;//;//+PIDRateY
+									   M1= M1Radio_in+PIDRateX;//;//-PIDRateY
                                       //---------------XASIS -----------------------------------
-									   M3= M3Radio_in-(pidx);//;//+PIDRateY
-									   M4= M4Radio_in-(pidx);//;//-PIDRateY
+									   M3= M3Radio_in-(PIDRateX);//;//+PIDRateY
+									   M4= M4Radio_in-(PIDRateX);//;//-PIDRateY
 
 								 }
 
