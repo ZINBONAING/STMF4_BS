@@ -235,9 +235,9 @@ void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int Rz
 	movavgcounter=movavgcounter+1;
 	//end Avergae last 20 sample
 */
-	RxGyroR=(((float)RxGyro0)/131.0)+0.7;
-	RyGyroR=((float)RyGyro0)/131.0+0.7;
-	RzGyroR=((float)RzGyro0)/131.0+0.7;
+	RxGyroR=((((float)RxGyro0)+120)/131.0);
+	RyGyroR=(((float)RyGyro0)+120)/131.0;
+	RzGyroR=(((float)RzGyro0)+120)/131.0;
 	//--up to here from eginning is 10us----
 	RaccModulus=sqrt((RxAccR*RxAccR)+(RyAccR*RyAccR)+(RzAccR*RzAccR));
 	RxAcc=RxAccR/RaccModulus;
@@ -285,8 +285,8 @@ void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int Rz
     	}
 
 
-    	RxGyro=sin(Axz*(PI/180.0))/sqrt((1+ squaredz(cos(Axz*(PI/180.0)))*squaredz(tan(Ayz*(PI/180.0)))   ));
-    	RyGyro=sin(Ayz*(PI/180.0))/sqrt((1+squaredz(cos(Ayz*(PI/180.0)))*squaredz(tan(Axz*(PI/180.0)))   ));
+    	RxGyro=sin(Axz)/sqrt((1+ squaredz(cos(Axz))*squaredz(tan(Ayz))   ));
+    	RyGyro=sin(Ayz)/sqrt((1+squaredz(cos(Ayz))*squaredz(tan(Axz))   ));
     	//0.9428 / (1+(-0.77)x4.21
 
     	//RzGyro=1;
@@ -481,7 +481,7 @@ if(serialflag==1){
 	   serial_output("%c%d.%d\t",Csign(M4),C1(M4),C2(M4));
 
    serial_output("GyroX:\t%c%d.%d\t",Csign(RxGyroR),C1(RxGyroR),C2(RxGyroR));
-   serial_output("GyroXRAW:%c%d.%d\t",Csign(GyroXvalue),C1(GyroXvalue),C2(GyroXvalue));
+   serial_output("GyroXRAW:\t%c%d.%d\t",Csign(GyroXvalue),C1(GyroXvalue),C2(GyroXvalue));
    serial_output("ErrRateX :\t%c%d.%d\t",Csign(ErrRateX),C1(ErrRateX),C2(ErrRateX));
    serial_output("XAngle PID:\t%c%d.%d\t",Csign(pidx),C1(pidx),C2(pidx));
    serial_output("XRatePID :\t%c%d.%d\t",Csign(PIDRateX),C1(PIDRateX),C2(PIDRateX));
@@ -545,7 +545,7 @@ if(serialflag==1){
 
     serial_output("Xangle= \t%c%d.%d\t",Csign(Axr),C1(Axr),C2(Axr));
     serial_output("AccAngleX= \t%c%d.%d\t",Csign(AccAngleX),C1(AccAngleX),C2(AccAngleX));
-    serial_output("GyroAngleX= \t%c%d.%d\t",Csign(RxGyro),C1(RxGyro),C2(RxGyro));
+    serial_output("GyroAngleX= \t%c%d.%d\t",Csign(Axz*180/PI),C1(Axz*180/PI),C2(Axz*180/PI));
 
     serial_output("ErrX=\t%c%d.%d\t",Csign(ErrorX),C1(ErrorX),C2(ErrorX));
 
