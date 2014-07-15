@@ -15,7 +15,7 @@
 #include <stm32f4xx_it.h>
 // Update Result here ---
 
-//---- very good response -25 and +25 X Swing we got from here-----
+//----ok now is to test out moving average and higher sampling---
 
 // End update resilt here.---
 
@@ -60,7 +60,7 @@ float PIDRateY;
 
 float RateXPG=0.8,RateXDG=0,RateXIG=0,SetXRate=5;
 float PreviousErrRateX,ErrRateX,DiffErrRateX,IntErrRateX,PtermRateX,DtermRateX,ItermRateX;
-float PIDRateX;
+float PIDRateX,Axz,Ayz;
 
 
 float p_termx=0.0,i_termx=0.0,d_termx=0.0,p_termy=0.0,i_termy=0.0,d_termy=0.0;
@@ -86,7 +86,7 @@ float sensorheight=0;
 float PGainH=0.2,IGainH=0,DgainH=0;
 float err_diffH,int_errH,p_termh,i_termh,d_termh,pidh,PreviousErrH;
 int PreviousFlightMode=0,StableMode=0;
-
+float 	RxAcc,RyAcc,RzAcc,RxGyro,RyGyro,RzGyro;
 //Radio status state machine
 int Radio_status=0;
 int Rstate=0;
@@ -191,8 +191,8 @@ void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int Rz
 	    GPIOD->BSRRL = 0xF000; // set PD1
 
 
-	float RaccModulus,RaccNormalize,Axz,Ayz,SignRzGyro;
-	float 	RxAcc,RyAcc,RzAcc,RxGyro,RyGyro,RzGyro;
+	float RaccModulus,RaccNormalize,SignRzGyro;
+
 
 	float   AyzPast,AxzPast,R;
 	float Wgyro=10.0;
@@ -235,9 +235,9 @@ void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int Rz
 	movavgcounter=movavgcounter+1;
 	//end Avergae last 20 sample
 */
-	RxGyroR=((float)RxGyro0)/131;
-	RyGyroR=((float)RyGyro0)/131;
-	RzGyroR=((float)RzGyro0)/131;
+	RxGyroR=(((float)RxGyro0)/131.0)+0.7;
+	RyGyroR=((float)RyGyro0)/131.0+0.7;
+	RzGyroR=((float)RzGyro0)/131.0+0.7;
 	//--up to here from eginning is 10us----
 	RaccModulus=sqrt((RxAccR*RxAccR)+(RyAccR*RyAccR)+(RzAccR*RzAccR));
 	RxAcc=RxAccR/RaccModulus;
@@ -285,8 +285,8 @@ void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int Rz
     	}
 
 
-    	RxGyro=sin(Axz)/sqrt((1+ squaredz(cos(Axz))*squaredz(tan(Ayz))   ));
-    	RyGyro=sin(Ayz)/sqrt((1+squaredz(cos(Ayz))*squaredz(tan(Axz))   ));
+    	RxGyro=sin(Axz*(PI/180.0))/sqrt((1+ squaredz(cos(Axz*(PI/180.0)))*squaredz(tan(Ayz*(PI/180.0)))   ));
+    	RyGyro=sin(Ayz*(PI/180.0))/sqrt((1+squaredz(cos(Ayz*(PI/180.0)))*squaredz(tan(Axz*(PI/180.0)))   ));
     	//0.9428 / (1+(-0.77)x4.21
 
     	//RzGyro=1;
@@ -544,6 +544,8 @@ if(serialflag==1){
 
 
     serial_output("Xangle= \t%c%d.%d\t",Csign(Axr),C1(Axr),C2(Axr));
+    serial_output("AccAngleX= \t%c%d.%d\t",Csign(AccAngleX),C1(AccAngleX),C2(AccAngleX));
+    serial_output("GyroAngleX= \t%c%d.%d\t",Csign(RxGyro),C1(RxGyro),C2(RxGyro));
 
     serial_output("ErrX=\t%c%d.%d\t",Csign(ErrorX),C1(ErrorX),C2(ErrorX));
 
@@ -1075,10 +1077,10 @@ void TIM2_IRQHandler()
                      }
 
         if(timercount%10000==0){
-            	setX=-25;
+            //	setX=-25;
                }
                if(timercount%20000==0){
-            		setX=25;
+            //		setX=25;
                 }
 
                if(timercount%30000==0){
