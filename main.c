@@ -50,7 +50,7 @@ int XErrbuf;
 //Pagin =4.6, Xgain =7 ,
 int manualradio=14000;
 #define Logbuf 500 //
-float PGain=2,PgainX=3,ErrorX=0,ErrorY=0,setX=-25,setY=0,setheight,ErrorH=0,GH=0.0005;
+float PGain=2,PgainX=3,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight,ErrorH=0,GH=0.0005;
 float IGain=0,Dgain=3.7,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
 float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5;
@@ -60,7 +60,7 @@ float PIDRateY;
 
 float RateXPG=0.8,RateXDG=0,RateXIG=0,SetXRate=5;
 float PreviousErrRateX,ErrRateX,DiffErrRateX,IntErrRateX,PtermRateX,DtermRateX,ItermRateX;
-float PIDRateX,Axz,Ayz;
+float PIDRateX,Axz,Ayz,RateAyzpast;
 
 
 float p_termx=0.0,i_termx=0.0,d_termx=0.0,p_termy=0.0,i_termy=0.0,d_termy=0.0;
@@ -144,7 +144,7 @@ int16_t GyroZvalue=0;
 
 float RxEst,RyEst,RzEst,RxEstpast,RyEstpast,RzEstpast,Axr,Ayr,Azr;
 float 	RxAccR,RyAccR,RzAccR,RxGyroR,RyGyroR,RzGyroR;
-
+float RateAxzpast,AyzPastpast;
 
 
 
@@ -270,12 +270,12 @@ void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int Rz
 
 
     	AxzPast=atan2(RxEstpast,RzEstpast);
-    	Axz=AxzPast+RateAxz*0.007;//new angle based on Gyro data
+    	Axz=AxzPast+((RateAxz+RateAxzpast)/2.0)*0.007;//new angle based on Gyro data
     	AyzPast=atan2(RyEstpast,RzEstpast);
-    	Ayz=AyzPast+RateAyz*0.007;
+    	Ayz=AyzPast+((RateAyz+RateAyzpast)/2.0)*0.007;
 
 
-    	if((cos(Axz)*(PI/180.0))>=0)
+    	if(cos(Axz)>=0)
     		{
     		SignRzGyro=1;
     		}
@@ -318,7 +318,8 @@ RzEstpast= RzEst;
 Axr=acos(RxEst)*180/PI-90;
 Ayr=acos(RyEst)*180/PI-90;
 Azr=acos(RzEst)*180/PI-90;
-
+RateAxzpast=RateAxz;
+RateAyzpast=AyzPast;
 }
 
 char Csign(float Zee){
