@@ -32,6 +32,8 @@ int stoptimer=0;
 int serialflag=0;
 int movavgcounter=0;
 int XErrbuf;
+int expect_received=0,received_msg=0;
+int16_t receivedmsg[25];
 // P=0.8 , I=0.1 , D=0.225
 // P=3, I=1, D=0.3
 //P=0.17 D=0.16 when upper limit set to 600
@@ -115,6 +117,7 @@ float M1Radio_in,M2Radio_in,M3Radio_in,M4Radio_in;
 
 //end Radio status state machine
 void PWMinput_radioCH3(void);
+void  UART2_sendbyte(uint8_t);
 void radio_in(void);
 //Version Number : Major.Minor.Complete/Progress
 // Revision : ZIO1.M1.2 # added PWM for motor
@@ -403,7 +406,67 @@ Delay(50000);
 	Delay(50000);
 	Delay(50000);
 init_USART3(9600);
+init_USART2(38400);
+init_GPIO();
 uint8_t received_data2=0xF0;
+int sf;
+for(sf=0;sf<24;sf++){
+	receivedmsg[sf]=0;
+}
+float DM_roll,DM_pitch,DM_raw;
+int16_t DM_roll_cal,DM_pitch_cal,DM_raw_cal;
+while(1){
+
+	  GPIOD->BSRRL = 0xF000; // set PD1
+
+
+	expect_received=1;
+UART2_sendbyte(0x31);
+
+
+//while(received_msg==0);
+/*
+for(sf=0;sf<24;sf++){
+	receivedmsg[sf]=0;
+}
+*/
+
+
+while(received_msg==0){
+
+}
+/*
+ *
+ * The Roll and Yaw angles have a range of –32768 to +32767 representing –180 to +180 degrees.
+ * The Pitch angle has a range of –16384 to +16383 representing –90 to +90 degrees.
+ * To obtain angles in units of degrees, the integer outputs should be multiplied by the scaled factor (360/65536).
+ *
+ *
+ *
+ * Byte 2
+Roll MSB Byte 1
+Roll LSB Byte 2
+Pitch MSB Byte 3
+Pitch LSB Byte 4
+Yaw MSB Byte 5
+Yaw LSB Byte 6
+ */
+DM_roll_cal=((receivedmsg[1]<<8)+(receivedmsg[2]));
+DM_roll=DM_roll_cal*360/65536;
+DM_pitch_cal=((receivedmsg[3]<<8)+(receivedmsg[4]));
+DM_pitch=DM_pitch*360/65536;
+DM_raw_cal=((receivedmsg[5]<<8)+(receivedmsg[6]));
+DM_raw=DM_raw_cal*360/65536;
+received_msg=0;
+GPIOD->BSRRH = 0xF000; // reset PD1
+
+
+serial_output("Roll:\t%c%d.%d\t",Csign(DM_roll),C1(DM_roll),C2(DM_roll));
+serial_output("Pitch:\t%c%d.%d\t",Csign(DM_pitch),C1(DM_pitch),C2(DM_pitch));
+serial_output("raw:\t%c%d.%d\t",Csign(DM_raw),C1(DM_raw),C2(DM_raw));
+
+}
+
 
 
 
@@ -414,7 +477,7 @@ serial_output("PWRMG1 = %x ",sensor_value);
 sensor_value=MPU9150_read1byte(MPU9150_WHO_AM_I);
 serial_output("I am MPU = %x ",sensor_value);
 
-init_GPIO();
+
 
   /* This flashed the LEDs on the board once
    * Two registers are used to set the pins (pin level is VCC)

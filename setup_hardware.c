@@ -14,8 +14,8 @@
 #include "stm32f4xx_tim.h"
 #include <stm32f4xx_it.h>
 #include <Global_variables.h>
-int Buf_counter=0;
-int expect_received=0,receivedmsg[20],received_msg=0,bufcount=0;
+int Buf_counter=0, bufcount=0;
+
 
 
 
@@ -125,11 +125,11 @@ void init_USART2(uint32_t baudrate){
   GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_Init(GPIOC, &GPIO_InitStruct);
+  GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* Connect USART pins to AF */
-  GPIO_PinAFConfig(GPIOC, GPIO_PinSource5, GPIO_AF_USART2);
-  GPIO_PinAFConfig(GPIOC, GPIO_PinSource6, GPIO_AF_USART2);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource5, GPIO_AF_USART2);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource6, GPIO_AF_USART2);
 
 	/* Now the USART_InitStruct is used to define the
 	 * properties of USART1
@@ -199,6 +199,22 @@ void Transmit_UART(USART_TypeDef* USARTx,int bufcounter){
 			sb_index = 0 ;
 			end_index = 0 ;
 
+		}
+
+
+
+}
+
+
+void UART2_sendbyte(uint8_t cmdbyte){
+
+	char txchar;
+	txchar = cmdbyte ;
+
+		if ( txchar )
+		{
+			while( !(USART2->SR & 0x00000040) );
+					USART_SendData(USART2,txchar);
 		}
 
 
@@ -299,23 +315,24 @@ void USART2_IRQHandler(void){
 		char t = USART2->DR; // the character from the USART1 data register is saved in t
 
 		if(expect_received==1){
-			if(t == 0x0E ){
-			 bufcount=1;
-			 receivedmsg[bufcount]=t;
-			}
-			expect_received=2;
+
+				expect_received=2;
+
+
 
 		}
 		if(expect_received==2){
-			bufcount=bufcount+1;
+
 			receivedmsg[bufcount]=t;
+			bufcount=bufcount+1;
 
 		}
 
-		if(bufcount>10){
+		if(bufcount>22){
 
-			expect_received==0;
+			expect_received=0;
 			received_msg=1;
+			bufcount=0;
 
 		}
 

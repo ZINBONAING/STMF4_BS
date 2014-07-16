@@ -4,6 +4,8 @@ extern char Csign(float);
 extern int C1(float);
 extern int C2(float);
 extern void init_USART3(uint32_t);
+extern void init_USART2(uint32_t);
+extern void  UART2_sendbyte(uint8_t);
 extern void USART_puts(USART_TypeDef*, volatile char *);
 extern void radio_in(void);
 extern  void PWMinput_radioCH3(void);
@@ -19,7 +21,9 @@ extern int his_timercount;
 extern int stoptimer;
 extern int serialflag;
 extern int movavgcounter;
-
+extern int expect_received;
+extern int received_msg;
+extern int16_t receivedmsg[25];
 //good performance
 //P=0.09, D=0.008
 // P=0.07, D=0.006
