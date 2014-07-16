@@ -146,8 +146,8 @@ void init_USART2(uint32_t baudrate){
     USART_ITConfig(USART2, USART_IT_RXNE, ENABLE); // enable the USART1 receive interrupt
 
         	NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;		 // we want to configure the USART1 interrupts
-        	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;// this sets the priority group of the USART1 interrupts
-        	NVIC_InitStructure.NVIC_IRQChannelSubPriority =1;		 // this sets the subpriority inside the group
+        	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;// this sets the priority group of the USART1 interrupts
+        	NVIC_InitStructure.NVIC_IRQChannelSubPriority =0;		 // this sets the subpriority inside the group
         	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			 // the USART1 interrupts are globally enabled
         	NVIC_Init(&NVIC_InitStructure);							 // the properties are passed to the NVIC_Init function which takes care of the low level stuff
     USART_Cmd(USART2, ENABLE);
@@ -328,7 +328,7 @@ void USART2_IRQHandler(void){
 
 		}
 
-		if(bufcount>22){
+		if(bufcount>20){
 
 			expect_received=0;
 			received_msg=1;
@@ -713,7 +713,7 @@ void InitializeTimer2()
 	 NVIC_InitTypeDef NVIC_InitStructure;
 	 TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
 	  NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;            /* Enable the TIM2 gloabal Interrupt */
-	  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;  /* value = 0 - 15*/
+	  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  /* value = 0 - 15*/
 	  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;         /* value = 0 - 15*/
 	  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	  NVIC_Init(&NVIC_InitStructure);
@@ -1032,7 +1032,7 @@ void PWMinput_radioCH3(void)
 
   /* Enable the TIM4 global Interrupt */
   NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 4; //0
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1; //0
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);

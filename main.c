@@ -466,14 +466,12 @@ serial_output("I am MPU = %x ",sensor_value);
 while(1){
 
 	if(conttrolflag==1){
-		 UART2_sendbyte(0x31);
+
 		     received_msg=0;
+
+		     UART2_sendbyte(0x31);
 		     expect_received=1;
-
-		       while(received_msg!=1){
-
-		       }
-
+		    while(received_msg!=1);
 
 
 		     OUT:
@@ -719,7 +717,7 @@ void radio_in(){
          //  radioin=manualradio;
 
 	    radioin=((DutyCycle2_radio-20000)/1.358)+8100;
-
+/*
        	m2m4_rpm=(-0.0002996819 *(radioin)*(radioin)) +7.5004877*(radioin) -40913.2314;
                      		m1m3_rpm=(-0.0002740191*(radioin)*(radioin)) + 6.9107775322*(radioin) -37915.38407;
                      		average_rpm=(m1m3_rpm+m2m4_rpm)/2.0;
@@ -738,7 +736,7 @@ void radio_in(){
 
 
 
-
+*/
 
 
 
@@ -1138,7 +1136,7 @@ void TIM2_IRQHandler()
         }
 
 
-        if(timercount%10==0){
+        if(timercount%15==0){
         	conttrolflag=1;
         }
 
