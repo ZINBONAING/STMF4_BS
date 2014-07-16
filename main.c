@@ -114,7 +114,8 @@ int PID_Start=0;
 float m1m3_rpm,m2m4_rpm,average_rpm,m1Rcompensate,m2Rcompensate,m3Rcompensate,m4Rcompensate;
 float M1Radio_in,M2Radio_in,M3Radio_in,M4Radio_in;
 
-
+float DM_roll,DM_pitch,DM_raw;
+int16_t DM_roll_cal,DM_pitch_cal,DM_raw_cal;
 //end Radio status state machine
 void PWMinput_radioCH3(void);
 void  UART2_sendbyte(uint8_t);
@@ -191,7 +192,7 @@ float squaredz(float x){
   return x*x;
 }
 void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int RzGyro0){
-	    GPIOD->BSRRL = 0xF000; // set PD1
+	//    GPIOD->BSRRL = 0xF000; // set PD1
 
 
 	float RaccModulus,RaccNormalize,SignRzGyro;
@@ -413,59 +414,8 @@ int sf;
 for(sf=0;sf<24;sf++){
 	receivedmsg[sf]=0;
 }
-float DM_roll,DM_pitch,DM_raw;
-int16_t DM_roll_cal,DM_pitch_cal,DM_raw_cal;
-while(1){
-
-	  GPIOD->BSRRL = 0xF000; // set PD1
 
 
-	expect_received=1;
-UART2_sendbyte(0x31);
-
-
-//while(received_msg==0);
-/*
-for(sf=0;sf<24;sf++){
-	receivedmsg[sf]=0;
-}
-*/
-
-
-while(received_msg==0){
-
-}
-/*
- *
- * The Roll and Yaw angles have a range of –32768 to +32767 representing –180 to +180 degrees.
- * The Pitch angle has a range of –16384 to +16383 representing –90 to +90 degrees.
- * To obtain angles in units of degrees, the integer outputs should be multiplied by the scaled factor (360/65536).
- *
- *
- *
- * Byte 2
-Roll MSB Byte 1
-Roll LSB Byte 2
-Pitch MSB Byte 3
-Pitch LSB Byte 4
-Yaw MSB Byte 5
-Yaw LSB Byte 6
- */
-DM_roll_cal=((receivedmsg[1]<<8)+(receivedmsg[2]));
-DM_roll=DM_roll_cal*360/65536;
-DM_pitch_cal=((receivedmsg[3]<<8)+(receivedmsg[4]));
-DM_pitch=DM_pitch*360/65536;
-DM_raw_cal=((receivedmsg[5]<<8)+(receivedmsg[6]));
-DM_raw=DM_raw_cal*360/65536;
-received_msg=0;
-GPIOD->BSRRH = 0xF000; // reset PD1
-
-
-serial_output("Roll:\t%c%d.%d\t",Csign(DM_roll),C1(DM_roll),C2(DM_roll));
-serial_output("Pitch:\t%c%d.%d\t",Csign(DM_pitch),C1(DM_pitch),C2(DM_pitch));
-serial_output("raw:\t%c%d.%d\t",Csign(DM_raw),C1(DM_raw),C2(DM_raw));
-
-}
 
 
 
@@ -489,9 +439,9 @@ serial_output("I am MPU = %x ",sensor_value);
    * A logical 1 in BSRRL will set the pin and a logical 1 in BSRRH will
    * reset the pin. A logical 0 in either register has no effect
    */
-  GPIOD->BSRRL = 0xF000; // set PD1
+ // GPIOD->BSRRL = 0xF000; // set PD1
   Delay1(1000000L);		 // wait a short period of time
-  GPIOD->BSRRH = 0xF000; // reset PD1
+  //GPIOD->BSRRH = 0xF000; // reset PD1
 
 
   StartMotor=0;
@@ -539,16 +489,21 @@ if(serialflag==1){
    serial_output("%c%d.%d\t",Csign(M3Radio_in),C1(M3Radio_in),C2(M3Radio_in));
    serial_output("%c%d.%d\t",Csign(M4Radio_in),C1(M4Radio_in),C2(M4Radio_in));
 */
-	   serial_output("%c%d.%d\t",Csign(M1),C1(M1),C2(M1));
-	   serial_output("%c%d.%d\t",Csign(M2),C1(M2),C2(M2));
-	   serial_output("%c%d.%d\t",Csign(M3),C1(M3),C2(M3));
-	   serial_output("%c%d.%d\t",Csign(M4),C1(M4),C2(M4));
+	//   serial_output("%c%d.%d\t",Csign(M1),C1(M1),C2(M1));
+	 //  serial_output("%c%d.%d\t",Csign(M2),C1(M2),C2(M2));
+	//   serial_output("%c%d.%d\t",Csign(M3),C1(M3),C2(M3));
+	//   serial_output("%c%d.%d\t",Csign(M4),C1(M4),C2(M4));
 
    serial_output("GyroX:\t%c%d.%d\t",Csign(RxGyroR),C1(RxGyroR),C2(RxGyroR));
    serial_output("GyroXRAW:\t%c%d.%d\t",Csign(GyroXvalue),C1(GyroXvalue),C2(GyroXvalue));
    serial_output("ErrRateX :\t%c%d.%d\t",Csign(ErrRateX),C1(ErrRateX),C2(ErrRateX));
    serial_output("XAngle PID:\t%c%d.%d\t",Csign(pidx),C1(pidx),C2(pidx));
    serial_output("XRatePID :\t%c%d.%d\t",Csign(PIDRateX),C1(PIDRateX),C2(PIDRateX));
+
+ serial_output("Roll:\t%c%d.%d\t",Csign(DM_roll),C1(DM_roll),C2(DM_roll));
+ serial_output("Pitch:\t%c%d.%d\t",Csign(DM_pitch),C1(DM_pitch),C2(DM_pitch));
+ serial_output("raw:\t%c%d.%d\t",Csign(DM_raw),C1(DM_raw),C2(DM_raw));
+
 
 
 
@@ -600,7 +555,7 @@ if(serialflag==1){
   // serial_output("P:%c%d.%d\t",Csign(p_termx),C1(p_termx),C2(p_termx));
   // serial_output("I:%c%d.%d\t",Csign(i_termx),C1(i_termx),C2(i_termx));
   // serial_output("D:%c%d.%d\t",Csign(d_termx),C1(d_termx),C2(d_termx));
-  serial_output("Radio PWM:%c%d.%d\t",Csign(radioin),C1(radioin),C2(radioin));
+ // serial_output("Radio PWM:%c%d.%d\t",Csign(radioin),C1(radioin),C2(radioin));
  //   ErrorH=setheight
 
   //  serial_output("ErrorH:%c%d.%d\t",Csign(ErrorH),C1(ErrorH),C2(ErrorH));
@@ -625,8 +580,8 @@ if(serialflag==1){
 
 
   //  PIDRateY+PIDRateX
-   serial_output("SM:%d\t",StartMotor);
-   serial_output("RS:%d\t",Radio_status);
+  // serial_output("SM:%d\t",StartMotor);
+  // serial_output("RS:%d\t",Radio_status);
 
  //   serial_output("StableMode:%d\t",StableMode);
  //   serial_output("FlightMode:%d\t",flightmode);
@@ -802,6 +757,8 @@ void ControlLoop(){
 
 
 
+/*
+ *
 
 	 GyroXvalue=(MPU9150_readSensor(MPU9150_GYRO_XOUT_L,MPU9150_GYRO_XOUT_H));
 
@@ -815,9 +772,61 @@ void ControlLoop(){
    //  GPIOD->BSRRL = 0xF000; // set PD1
      fuseGyroAcc(AccXvalue,AccYvalue,AccZvalue,GyroXvalue,GyroYvalue,GyroZvalue);
   //   GPIOD->BSRRH = 0xF000; // reset PD1
+ */
+
+
+//--------- adding 3DM-GX1 as secondry IMU
 
 
 
+     	//  GPIOD->BSRRL = 0xF000; // set PD1
+
+
+     	expect_received=1;
+     UART2_sendbyte(0x31);
+
+
+     //while(received_msg==0);
+     /*
+     for(sf=0;sf<24;sf++){
+     	receivedmsg[sf]=0;
+     }
+     */
+
+
+
+     /*
+      *
+      * The Roll and Yaw angles have a range of –32768 to +32767 representing –180 to +180 degrees.
+      * The Pitch angle has a range of –16384 to +16383 representing –90 to +90 degrees.
+      * To obtain angles in units of degrees, the integer outputs should be multiplied by the scaled factor (360/65536).
+      *
+      *
+      *
+      * Byte 2
+     Roll MSB Byte 1
+     Roll LSB Byte 2
+     Pitch MSB Byte 3
+     Pitch LSB Byte 4
+     Yaw MSB Byte 5
+     Yaw LSB Byte 6
+      */
+     DM_roll_cal=((receivedmsg[1]<<8)+(receivedmsg[2]));
+     DM_roll=DM_roll_cal*360/65536;
+     DM_pitch_cal=((receivedmsg[3]<<8)+(receivedmsg[4]));
+     DM_pitch=DM_pitch_cal*360/65536;
+     DM_raw_cal=((receivedmsg[5]<<8)+(receivedmsg[6]));
+     DM_raw=DM_raw_cal*360/65536;
+     received_msg=0;
+  //   GPIOD->BSRRH = 0xF000; // reset PD1
+
+
+
+
+
+
+
+//----------- End adding  IMU
 
 
 
@@ -1129,9 +1138,9 @@ void TIM2_IRQHandler()
               }
 
         if((timercount%7==0) & (timercount>5000)){
-        //	GPIOD->BSRRL = 0xF000; // set PD1
+       	GPIOD->BSRRL = 0xF000; // set PD1
         	ControlLoop();
-		// 	 GPIOD->BSRRH = 0xF000; // reset PD1
+	    GPIOD->BSRRH = 0xF000; // reset PD1
         }
 
 
