@@ -466,6 +466,30 @@ serial_output("I am MPU = %x ",sensor_value);
 while(1){
 
 	if(conttrolflag==1){
+		 UART2_sendbyte(0x31);
+		     received_msg=0;
+		     expect_received=1;
+
+		       while(received_msg!=1){
+
+		       }
+
+
+
+		     OUT:
+		        DM_roll_cal=((receivedmsg[1]<<8)+(receivedmsg[2]));
+		        DM_roll=DM_roll_cal*360/65536;
+		        DM_pitch_cal=((receivedmsg[3]<<8)+(receivedmsg[4]));
+		        DM_pitch=DM_pitch_cal*360/65536;
+		        DM_raw_cal=((receivedmsg[5]<<8)+(receivedmsg[6]));
+		        DM_raw=DM_raw_cal*360/65536;
+
+		        skipIMU:
+
+
+		     	GPIOD->BSRRL = 0xF000; // set PD1
+		            	ControlLoop();
+		    	    GPIOD->BSRRH = 0xF000; // reset PD1
 
 			conttrolflag=0;
 
@@ -757,8 +781,7 @@ void ControlLoop(){
 
 
 
-/*
- *
+
 
 	 GyroXvalue=(MPU9150_readSensor(MPU9150_GYRO_XOUT_L,MPU9150_GYRO_XOUT_H));
 
@@ -772,7 +795,6 @@ void ControlLoop(){
    //  GPIOD->BSRRL = 0xF000; // set PD1
      fuseGyroAcc(AccXvalue,AccYvalue,AccZvalue,GyroXvalue,GyroYvalue,GyroZvalue);
   //   GPIOD->BSRRH = 0xF000; // reset PD1
- */
 
 
 //--------- adding 3DM-GX1 as secondry IMU
@@ -782,8 +804,7 @@ void ControlLoop(){
      	//  GPIOD->BSRRL = 0xF000; // set PD1
 
 
-     	expect_received=1;
-     UART2_sendbyte(0x31);
+
 
 
      //while(received_msg==0);
@@ -811,13 +832,8 @@ void ControlLoop(){
      Yaw MSB Byte 5
      Yaw LSB Byte 6
       */
-     DM_roll_cal=((receivedmsg[1]<<8)+(receivedmsg[2]));
-     DM_roll=DM_roll_cal*360/65536;
-     DM_pitch_cal=((receivedmsg[3]<<8)+(receivedmsg[4]));
-     DM_pitch=DM_pitch_cal*360/65536;
-     DM_raw_cal=((receivedmsg[5]<<8)+(receivedmsg[6]));
-     DM_raw=DM_raw_cal*360/65536;
-     received_msg=0;
+
+
   //   GPIOD->BSRRH = 0xF000; // reset PD1
 
 
@@ -1120,10 +1136,16 @@ void TIM2_IRQHandler()
 
 
         }
+
+
+        if(timercount%10==0){
+        	conttrolflag=1;
+        }
+
         if(timercount%20==0)
               {
         	radio_in();
-              	conttrolflag=1;
+
 
               	if(Radio_status==1){
 
@@ -1137,10 +1159,8 @@ void TIM2_IRQHandler()
 
               }
 
-        if((timercount%7==0) & (timercount>5000)){
-       	GPIOD->BSRRL = 0xF000; // set PD1
-        	ControlLoop();
-	    GPIOD->BSRRH = 0xF000; // reset PD1
+        if((timercount%10==0) & (timercount>5000)){
+
         }
 
 
