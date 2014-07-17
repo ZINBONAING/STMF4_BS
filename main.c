@@ -467,27 +467,10 @@ while(1){
 
 	if(conttrolflag==1){
 
-		     received_msg=0;
-
-		     UART2_sendbyte(0x31);
-		     expect_received=1;
-		    while(received_msg!=1);
 
 
-		     OUT:
-		        DM_roll_cal=((receivedmsg[1]<<8)+(receivedmsg[2]));
-		        DM_roll=DM_roll_cal*360/65536;
-		        DM_pitch_cal=((receivedmsg[3]<<8)+(receivedmsg[4]));
-		        DM_pitch=DM_pitch_cal*360/65536;
-		        DM_raw_cal=((receivedmsg[5]<<8)+(receivedmsg[6]));
-		        DM_raw=DM_raw_cal*360/65536;
-
-		        skipIMU:
 
 
-		     	GPIOD->BSRRL = 0xF000; // set PD1
-		            	ControlLoop();
-		    	    GPIOD->BSRRH = 0xF000; // reset PD1
 
 			conttrolflag=0;
 
@@ -779,7 +762,7 @@ void ControlLoop(){
 
 
 
-
+/*
 
 	 GyroXvalue=(MPU9150_readSensor(MPU9150_GYRO_XOUT_L,MPU9150_GYRO_XOUT_H));
 
@@ -794,7 +777,7 @@ void ControlLoop(){
      fuseGyroAcc(AccXvalue,AccYvalue,AccZvalue,GyroXvalue,GyroYvalue,GyroZvalue);
   //   GPIOD->BSRRH = 0xF000; // reset PD1
 
-
+*/
 //--------- adding 3DM-GX1 as secondry IMU
 
 
@@ -844,11 +827,26 @@ void ControlLoop(){
 
 
 
+    received_msg=0;
+
+		     UART2_sendbyte(0x31);
+		     expect_received=1;
+		    while(received_msg!=1);
+
+
+		     OUT:
+		        DM_roll_cal=((receivedmsg[1]<<8)+(receivedmsg[2]));
+		        DM_roll=DM_roll_cal*360/65536;
+		        DM_pitch_cal=((receivedmsg[3]<<8)+(receivedmsg[4]));
+		        DM_pitch=DM_pitch_cal*360/65536;
+		        DM_raw_cal=((receivedmsg[5]<<8)+(receivedmsg[6]));
+		        DM_raw=DM_raw_cal*360/65536;
+
+		        skipIMU:
 
 
 
-
-		   ErrorX=setX-Axr;
+		   ErrorX=setX-DM_pitch;
 		   ErrorY=setY-Ayr;
 		 //  ErrorH=setheight-DutyCycle2;
 
@@ -1017,11 +1015,11 @@ void ControlLoop(){
 						//		M4=radioin-PIDRateY;//;//+(GH*ErrorH);+(GH*ErrorH); +pidx
 								 if(flightmode==0){
 
-									   M2= M2Radio_in+PIDRateX;//;//+PIDRateY
-									   M1= M1Radio_in+PIDRateX;//;//-PIDRateY
+									   M2= M2Radio_in+pidx;//;//+PIDRateY
+									   M1= M1Radio_in+pidx;//;//-PIDRateY
                                       //---------------XASIS -----------------------------------
-									   M3= M3Radio_in-(PIDRateX);//;//+PIDRateY
-									   M4= M4Radio_in-(PIDRateX);//;//-PIDRateY
+									   M3= M3Radio_in-pidx;//;//+PIDRateY
+									   M4= M4Radio_in-pidx;//;//-PIDRateY
 
 								 }
 
@@ -1158,7 +1156,9 @@ void TIM2_IRQHandler()
               }
 
         if((timercount%10==0) & (timercount>5000)){
-
+        	GPIOD->BSRRL = 0xF000; // set PD1
+        			               			        		            	ControlLoop();
+        			               			        		    	    GPIOD->BSRRH = 0xF000; // reset PD1
         }
 
 
