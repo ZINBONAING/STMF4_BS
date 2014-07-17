@@ -52,8 +52,8 @@ int16_t receivedmsg[25];
 //Pagin =4.6, Xgain =7 ,
 int manualradio=14000;
 #define Logbuf 500 //
-float PGain=2,PgainX=3,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight,ErrorH=0,GH=0.0005;
-float IGain=0,Dgain=3.7,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
+float PGain=2,PgainX=3,ErrorX=0,ErrorY=0,setX=-25,setY=0,setheight,ErrorH=0,GH=0.0005;
+float IGain=0,Dgain=1.5,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
 float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5;
 float PreviousErrRateY,ErrRateY,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY;
@@ -75,7 +75,7 @@ float temperrX,temperrY;
 int flightmode=0;
 #define I2C_TIMEOUT  (0x5)
 #define PI 3.14159265358979
-float MXlimit=15000;
+float MXlimit=13000;
 #define MNlimit 8100
 #define step 100
 
@@ -778,7 +778,7 @@ void ControlLoop(){
 
 
 
-
+/*
 
 
 	 GyroXvalue=(MPU9150_readSensor(MPU9150_GYRO_XOUT_L,MPU9150_GYRO_XOUT_H));
@@ -801,7 +801,7 @@ void ControlLoop(){
 
      	//  GPIOD->BSRRL = 0xF000; // set PD1
 
-
+*/
 
 
 
@@ -848,7 +848,7 @@ void ControlLoop(){
 
 
 
-		   ErrorX=setX-Axr;
+		   ErrorX=setX-DM_pitch;//Axr
 		   ErrorY=setY-Ayr;
 		 //  ErrorH=setheight-DutyCycle2;
 
@@ -962,7 +962,8 @@ void ControlLoop(){
 								PreviousErrY=ErrorY;
 
 
-								if(((ErrorY<2) && (ErrorY>-2)) && ((ErrorX<2) && (ErrorX>-2))){
+							//	if(((ErrorY<2) && (ErrorY>-2)) && ((ErrorX<2) && (ErrorX>-2))){
+								if( ErrorX==0){
 																	 StableMode=1;
 
 																 }
@@ -1017,11 +1018,11 @@ void ControlLoop(){
 						//		M4=radioin-PIDRateY;//;//+(GH*ErrorH);+(GH*ErrorH); +pidx
 								 if(flightmode==0){
 
-									   M2= M2Radio_in+PIDRateX;//;//+PIDRateY
-									   M1= M1Radio_in+PIDRateX;//;//-PIDRateY
+									   M2= M2Radio_in+pidx;//;//+PIDRateY
+									   M1= M1Radio_in+pidx;//;//-PIDRateY
                                       //---------------XASIS -----------------------------------
-									   M3= M3Radio_in-(PIDRateX);//;//+PIDRateY
-									   M4= M4Radio_in-(PIDRateX);//;//-PIDRateY
+									   M3= M3Radio_in-pidx;//;//+PIDRateY
+									   M4= M4Radio_in-pidx;//;//-PIDRateY
 
 								 }
 
@@ -1168,10 +1169,10 @@ void TIM2_IRQHandler()
                      }
 
         if(timercount%10000==0){
-            //	setX=-25;
+            	setX=-25;
                }
                if(timercount%20000==0){
-            //		setX=25;
+            		setX=25;
                 }
 
                if(timercount%30000==0){
