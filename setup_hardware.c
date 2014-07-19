@@ -144,6 +144,7 @@ void init_USART2(uint32_t baudrate){
 
     USART_Init(USART2, &USART_InitStruct);
     USART_ITConfig(USART2, USART_IT_RXNE, ENABLE); // enable the USART1 receive interrupt
+    USART_ITConfig(USART2, USART_IT_TXNE, ENABLE); // enable the USART1 receive interrupt
 
         	NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;		 // we want to configure the USART1 interrupts
         	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;// this sets the priority group of the USART1 interrupts
@@ -328,11 +329,15 @@ void USART2_IRQHandler(void){
 
 		}
 
-		if(bufcount>20){
+		if(bufcount>10){
 
 			expect_received=0;
 			received_msg=1;
 			bufcount=0;
+
+			   c = UART_GetByte();
+			RINGFIFO_WR(gUartFifo, c);
+
 
 		}
 
