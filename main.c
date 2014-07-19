@@ -52,8 +52,8 @@ int16_t receivedmsg[25];
 //Pagin =4.6, Xgain =7 ,
 int manualradio=14000;
 #define Logbuf 500 //
-float PGain=2,PgainX=1.5,ErrorX=0,ErrorY=0,setX=-25,setY=0,setheight,ErrorH=0,GH=0.0005;
-float IGain=0,Dgain=0.7,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
+float PGain=2,PgainX=3,ErrorX=0,ErrorY=0,setX=-25,setY=0,setheight,ErrorH=0,GH=0.0005;
+float IGain=0,Dgain=1.5,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
 float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5;
 float PreviousErrRateY,ErrRateY,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY;
@@ -149,27 +149,6 @@ int16_t GyroZvalue=0;
 float RxEst,RyEst,RzEst,RxEstpast,RyEstpast,RzEstpast,Axr,Ayr,Azr;
 float 	RxAccR,RyAccR,RzAccR,RxGyroR,RyGyroR,RzGyroR;
 float RateAxzpast,AyzPastpast;
-
-
-#define RINGFIFO_SIZE (1024)              /* serial buffer in bytes (power 2)   */
-#define RINGFIFO_MASK (RINGFIFO_SIZE-1ul) /* buffer size mask                   */
-
-/* Buffer read / write macros                                                 */
-#define RINGFIFO_RESET(ringFifo)      {ringFifo.rdIdx = ringFifo.wrIdx = 0;}
-#define RINGFIFO_WR(ringFifo, dataIn) {ringFifo.data[RINGFIFO_MASK & ringFifo.wrIdx++] = (dataIn);}
-#define RINGFIFO_RD(ringFifo, dataOut){ringFifo.rdIdx++; dataOut = ringFifo.data[RINGFIFO_MASK & (ringFifo.rdIdx-1)];}
-#define RINGFIFO_EMPTY(ringFifo)      (ringFifo.rdIdx == ringFifo.wrIdx)
-#define RINGFIFO_FULL(ringFifo)       ((RINGFIFO_MASK & ringFifo.rdIdx) == (RINGFIFO_MASK & (ringFifo.wrIdx+1)))
-#define RINGFIFO_COUNT(ringFifo)      (RINGFIFO_MASK & (ringFifo.wrIdx - ringFifo.rdIdx))
-
-/* buffer type                                                                */
-typedef struct{
-    uint32_t size;
-    uint32_t wrIdx;
-    uint32_t rdIdx;
-    uint8_t data[RINGFIFO_SIZE];
-} RingFifo_t;
-RingFifo_t gUartFifo;
 
 
 
@@ -488,23 +467,29 @@ while(1){
 
 	if(conttrolflag==1){
 
-		 received_msg=0;
-		  GPIOD->BSRRL = 0xF000; // set PD1
-		  UART2_sendbyte(0x31);
-		  expect_received=1;
-		  while(received_msg!=1);
-		  DM_roll_cal=((receivedmsg[1]<<8)+(receivedmsg[2]));
-							        DM_roll=DM_roll_cal*360/65536;
-							        DM_pitch_cal=((receivedmsg[3]<<8)+(receivedmsg[4]));
-							        DM_pitch=DM_pitch_cal*360/65536;
-							        DM_raw_cal=((receivedmsg[5]<<8)+(receivedmsg[6]));
-							        DM_raw=DM_raw_cal*360/65536;
+		     received_msg=0;
+
+		     UART2_sendbyte(0x31);
+		     expect_received=1;
+		    while(received_msg!=1);
 
 
-           ControlLoop();
-		  GPIOD->BSRRH = 0xF000; // reset PD1
+		     OUT:
+		        DM_roll_cal=((receivedmsg[1]<<8)+(receivedmsg[2]));
+		        DM_roll=DM_roll_cal*360/65536;
+		        DM_pitch_cal=((receivedmsg[3]<<8)+(receivedmsg[4]));
+		        DM_pitch=DM_pitch_cal*360/65536;
+		        DM_raw_cal=((receivedmsg[5]<<8)+(receivedmsg[6]));
+		        DM_raw=DM_raw_cal*360/65536;
 
-		  conttrolflag=0;
+		        skipIMU:
+
+
+		     	GPIOD->BSRRL = 0xF000; // set PD1
+		            	ControlLoop();
+		    	    GPIOD->BSRRH = 0xF000; // reset PD1
+
+			conttrolflag=0;
 
 
 
@@ -526,16 +511,16 @@ if(serialflag==1){
    serial_output("%c%d.%d\t",Csign(M3Radio_in),C1(M3Radio_in),C2(M3Radio_in));
    serial_output("%c%d.%d\t",Csign(M4Radio_in),C1(M4Radio_in),C2(M4Radio_in));
 */
-  serial_output("%c%d.%d\t",Csign(M1),C1(M1),C2(M1));
-  serial_output("%c%d.%d\t",Csign(M2),C1(M2),C2(M2));
-  serial_output("%c%d.%d\t",Csign(M3),C1(M3),C2(M3));
-   serial_output("%c%d.%d\t",Csign(M4),C1(M4),C2(M4));
+	//   serial_output("%c%d.%d\t",Csign(M1),C1(M1),C2(M1));
+	 //  serial_output("%c%d.%d\t",Csign(M2),C1(M2),C2(M2));
+	//   serial_output("%c%d.%d\t",Csign(M3),C1(M3),C2(M3));
+	//   serial_output("%c%d.%d\t",Csign(M4),C1(M4),C2(M4));
 
-//   serial_output("GyroX:\t%c%d.%d\t",Csign(RxGyroR),C1(RxGyroR),C2(RxGyroR));
-//   serial_output("GyroXRAW:\t%c%d.%d\t",Csign(GyroXvalue),C1(GyroXvalue),C2(GyroXvalue));
-//   serial_output("ErrRateX :\t%c%d.%d\t",Csign(ErrRateX),C1(ErrRateX),C2(ErrRateX));
+   serial_output("GyroX:\t%c%d.%d\t",Csign(RxGyroR),C1(RxGyroR),C2(RxGyroR));
+   serial_output("GyroXRAW:\t%c%d.%d\t",Csign(GyroXvalue),C1(GyroXvalue),C2(GyroXvalue));
+   serial_output("ErrRateX :\t%c%d.%d\t",Csign(ErrRateX),C1(ErrRateX),C2(ErrRateX));
    serial_output("XAngle PID:\t%c%d.%d\t",Csign(pidx),C1(pidx),C2(pidx));
-//   serial_output("XRatePID :\t%c%d.%d\t",Csign(PIDRateX),C1(PIDRateX),C2(PIDRateX));
+   serial_output("XRatePID :\t%c%d.%d\t",Csign(PIDRateX),C1(PIDRateX),C2(PIDRateX));
 
  serial_output("Roll:\t%c%d.%d\t",Csign(DM_roll),C1(DM_roll),C2(DM_roll));
  serial_output("Pitch:\t%c%d.%d\t",Csign(DM_pitch),C1(DM_pitch),C2(DM_pitch));
@@ -933,7 +918,6 @@ void ControlLoop(){
 
 //----------------------compenstae unbalance CW and CCW -------------------------
 								float check;
-								/*
 								check=(M1Radio_in+M3Radio_in+M2Radio_in+M4Radio_in)/4.0;
 						                     		  if((check>MXlimit) ||  (check<MNlimit)){
 						                     			 M1Radio_in=radioin;
@@ -944,7 +928,6 @@ void ControlLoop(){
 
 						                     		       }
 						                     		// if((radioin>12000)){
-						          */
 						                     								                     			M1Radio_in=radioin;
 						                     								                     			M2Radio_in=radioin;
 						                     								                     			M3Radio_in=radioin;
@@ -959,7 +942,7 @@ void ControlLoop(){
 
 
 
-								err_diffX=(ErrorX-PreviousErrX)/0.005;
+								err_diffX=(ErrorX-PreviousErrX)/0.02;
 								int_errX=int_errX + ErrorX;
 
 //----------------------------------------------------------------
@@ -1104,9 +1087,9 @@ void ControlLoop(){
 						 Ptermx[XErrbuf]=p_termx;
 						Dtermx[XErrbuf]=d_termx;
 										 Itermx[XErrbuf]=i_termx;
-										 PIDx[XErrbuf]=pidx;
+										 PIDx[XErrbuf]=PIDRateX;
 										 Radioinx[XErrbuf]=radioin;
-										 CurrentX[XErrbuf]=DM_pitch;
+										 CurrentX[XErrbuf]=Axr;
 					XErrbuf=XErrbuf+1;
 					}
 
@@ -1154,7 +1137,7 @@ void TIM2_IRQHandler()
         }
 
 
-        if(timercount%20==0){
+        if(timercount%15==0){
         	conttrolflag=1;
         }
 
