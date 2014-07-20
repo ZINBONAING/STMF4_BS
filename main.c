@@ -118,7 +118,7 @@ float M1Radio_in,M2Radio_in,M3Radio_in,M4Radio_in;
 float DM_roll,DM_pitch,DM_raw;
 int16_t  DM_cmd,DM_roll_cal,DM_pitch_cal,DM_raw_cal,DM_AccelX_cal,DM_AccelY_cal,DM_AccelZ_cal,DM_CompAngRateX_cal,DM_CompAngRateY_cal,DM_CompAngRateZ_cal,DM_TimerTicks_cal,checksum;
 //int16_t  DM_cmd;
-int16_t CRCvalidation=0;
+int16_t CRCvalidation=0,Gyro_sensitivity=0,DM_CompAngRateX;
 //end Radio status state machine
 void PWMinput_radioCH3(void);
 void  UART2_sendbyte(uint8_t);
@@ -429,9 +429,22 @@ sensor_value=MPU9150_read1byte(MPU9150_PWR_MGMT_1);
 serial_output("PWRMG1 = %x ",sensor_value);
 sensor_value=MPU9150_read1byte(MPU9150_WHO_AM_I);
 serial_output("I am MPU = %x ",sensor_value);
+int cntG;
+for(cntG=0;cntG<3;cntG++){
+UART2_sendbyte(0x28);
+UART2_sendbyte(0x82);
+expect_received=6;
+Delay(50000);
+Delay(50000);
+Delay(50000);
+Delay(50000);
+Delay(50000);
+Delay(50000);
+Delay(50000);
+Delay(50000);
 
-
-
+}
+expect_received=0;
   /* This flashed the LEDs on the board once
    * Two registers are used to set the pins (pin level is VCC)
    * or to reset the pins (pin level is GND)
@@ -511,8 +524,9 @@ if(serialflag==1){
  serial_output("Roll:\t%c%d.%d\t",Csign(DM_roll),C1(DM_roll),C2(DM_roll));
  serial_output("Pitch:\t%c%d.%d\t",Csign(DM_pitch),C1(DM_pitch),C2(DM_pitch));
  serial_output("raw:\t%c%d.%d\t",Csign(DM_raw),C1(DM_raw),C2(DM_raw));
+ serial_output("DM_CompAngRateX:\t%c%d.%d\t",Csign(DM_CompAngRateX),C1(DM_CompAngRateX),C2(DM_CompAngRateX));
 
-
+ //serial_output("Gyro Sensitivity %d,",Gyro_sensitivity);
 
 
 /*

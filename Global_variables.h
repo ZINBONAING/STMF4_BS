@@ -35,7 +35,7 @@ extern float IGain,Dgain,err_diffX,err_diffY,int_errX,int_errY,PreviousErrX,Prev
 extern int16_t AccXA[20],AccYA[20],AccZA[20],GyroXA[20],GyroYA[20],GyroZA[20];
 extern float DM_roll,DM_pitch,DM_raw;
 extern int16_t  DM_cmd,DM_roll_cal,DM_pitch_cal,DM_raw_cal,DM_AccelX_cal,DM_AccelY_cal,DM_AccelZ_cal,DM_CompAngRateX_cal,DM_CompAngRateY_cal,DM_CompAngRateZ_cal,DM_TimerTicks_cal,checksum;
-extern int16_t mutex,CRCvalidation;
+extern int16_t mutex,CRCvalidation,Gyro_sensitivity,DM_CompAngRateX;
 //extern int16_t DM_cmd;
 
 //Radio status state machine

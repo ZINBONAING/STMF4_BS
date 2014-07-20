@@ -328,7 +328,25 @@ if(t==0x31){
 
 		}
 
-		if(bufcount>23){
+
+
+		if(expect_received==6){
+
+				receivedmsg[bufcount]=t;
+				bufcount=bufcount+1;
+
+			}
+
+		if((expect_received==6)&(bufcount>1)){
+
+
+			Gyro_sensitivity=((receivedmsg[0]<<8)+(receivedmsg[1]));
+			expect_received=0;
+						received_msg=1;
+						bufcount=0;
+
+		}
+		if((expect_received==1)&(bufcount>23)){
 			mutex=1;
 			expect_received=0;
 			received_msg=1;
@@ -345,13 +363,14 @@ if(t==0x31){
 		//			        DM_AccelX_cal,DM_AccelY_cal,DM_AccelZ_cal,DM_CompAngRateX_cal,DM_CompAngRateY_cal,DM_CompAngRateZ_cal,DM_TimerTicks_cal;
 			//DM_AccelX
 
-					       DM_AccelX_cal=((receivedmsg[7]<<8)+(receivedmsg[8]));
+					        DM_AccelX_cal=((receivedmsg[7]<<8)+(receivedmsg[8]));
 					        DM_AccelY_cal=((receivedmsg[9]<<8)+(receivedmsg[10]));
 					        DM_AccelZ_cal=((receivedmsg[11]<<8)+(receivedmsg[12]));
 					        DM_CompAngRateX_cal=((receivedmsg[13]<<8)+(receivedmsg[14]));
 					        DM_CompAngRateY_cal=((receivedmsg[15]<<8)+(receivedmsg[16]));
 					        DM_CompAngRateZ_cal=((receivedmsg[17]<<8)+(receivedmsg[18]));
-
+					      //  DM_CompAngRateX=DM_CompAngRateX_cal*(32768000/ Gyro_sensitivity);
+					        //  Gyro_sensitivity
 					      DM_TimerTicks_cal=((receivedmsg[19]<<8)+(receivedmsg[20]));
 					      checksum=((receivedmsg[21]<<8)+(receivedmsg[22]));
 					      checksumself=DM_cmd+DM_roll_cal+DM_pitch_cal+DM_raw_cal+DM_AccelX_cal+ DM_AccelY_cal+DM_AccelZ_cal+DM_CompAngRateX_cal+DM_CompAngRateY_cal+DM_CompAngRateZ_cal+DM_TimerTicks_cal;
