@@ -52,8 +52,8 @@ int16_t receivedmsg[25];
 //Pagin =4.6, Xgain =7 ,
 int manualradio=14000;
 #define Logbuf 500 //
-float PGain=2,PgainX=3,ErrorX=0,ErrorY=0,setX=-25,setY=0,setheight,ErrorH=0,GH=0.0005;
-float IGain=0,Dgain=1.5,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
+float PGain=2,PgainX=8,ErrorX=0,ErrorY=0,setX=-25,setY=0,setheight,ErrorH=0,GH=0.0005;
+float IGain=0,Dgain=16,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
 float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5;
 float PreviousErrRateY,ErrRateY,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY;
@@ -69,6 +69,7 @@ float p_termx=0.0,i_termx=0.0,d_termx=0.0,p_termy=0.0,i_termy=0.0,d_termy=0.0;
 float pidx=0.0,pidy=0.0;
 float M1=500,M2=500,M3=500,M4=500;
 int16_t AccXA[20],AccYA[20],AccZA[20],GyroXA[20],GyroYA[20],GyroZA[20];
+int16_t mutex=0;
 int trottle_manual=0,trottleintrrupt=0,conttrolflag,setmotorspeed=0,state1=0;
 float AccAngleX,AccAngleY,RateAyz,RateAxz;
 float temperrX,temperrY;
@@ -115,7 +116,9 @@ float m1m3_rpm,m2m4_rpm,average_rpm,m1Rcompensate,m2Rcompensate,m3Rcompensate,m4
 float M1Radio_in,M2Radio_in,M3Radio_in,M4Radio_in;
 
 float DM_roll,DM_pitch,DM_raw;
-int16_t DM_roll_cal,DM_pitch_cal,DM_raw_cal;
+int16_t  DM_cmd,DM_roll_cal,DM_pitch_cal,DM_raw_cal,DM_AccelX_cal,DM_AccelY_cal,DM_AccelZ_cal,DM_CompAngRateX_cal,DM_CompAngRateY_cal,DM_CompAngRateZ_cal,DM_TimerTicks_cal,checksum;
+//int16_t  DM_cmd;
+int16_t CRCvalidation=0;
 //end Radio status state machine
 void PWMinput_radioCH3(void);
 void  UART2_sendbyte(uint8_t);
@@ -394,11 +397,11 @@ InitPWM4();
 
 PWMinput_sound();
 PWMinput_radioCH3();
-//PWMinput_radioCH5();
+
 PWMinput_radioCH6();
 InitializeTimer2();
 
-//InitializeTimer2();
+
 Delay(50000);
 	Delay(50000);
 	Delay(50000);Delay(50000);
@@ -462,36 +465,19 @@ serial_output("I am MPU = %x ",sensor_value);
 
 
 
-
 while(1){
 
 	if(conttrolflag==1){
-
-		     received_msg=0;
-
-		     UART2_sendbyte(0x31);
-		     expect_received=1;
-		    while(received_msg!=1);
-
-
-		     OUT:
-		        DM_roll_cal=((receivedmsg[1]<<8)+(receivedmsg[2]));
-		        DM_roll=DM_roll_cal*360/65536;
-		        DM_pitch_cal=((receivedmsg[3]<<8)+(receivedmsg[4]));
-		        DM_pitch=DM_pitch_cal*360/65536;
-		        DM_raw_cal=((receivedmsg[5]<<8)+(receivedmsg[6]));
-		        DM_raw=DM_raw_cal*360/65536;
-
-		        skipIMU:
-
-
-		     	GPIOD->BSRRL = 0xF000; // set PD1
+		GPIOD->BSRRL = 0x8000; // set PD1
+	        skipIMU:
 		            	ControlLoop();
-		    	    GPIOD->BSRRH = 0xF000; // reset PD1
+
 
 			conttrolflag=0;
 
 
+			 GPIOD->BSRRH = 0x8000; // reset PD1
+		  //  while(received_msg!=1);
 
 
 	}
@@ -843,12 +829,18 @@ void ControlLoop(){
 //----------- End adding  IMU
 
 
+	float SDM_pitch;
+if(CRCvalidation==0){
+	SDM_pitch=DM_pitch;
+if(DM_pitch<-3){
+								int kg=0;
+								kg=kg+1;
+
+					        }
+}
 
 
-
-
-
-		   ErrorX=setX-DM_pitch;//Axr
+		   ErrorX=setX-SDM_pitch;//Axr
 		   ErrorY=setY-Ayr;
 		 //  ErrorH=setheight-DutyCycle2;
 
@@ -1125,19 +1117,20 @@ void TIM2_IRQHandler()
         	timercount=5000;
         }
 
-        if(timercount%50==0){
+        if(timercount%300==0){
         	serialflag=1;
         }
 
-        if(timercount%3==0){
+        if((timercount%20==0) & (timercount>5000)){
 
-
+        	  UART2_sendbyte(0x31);
+              expect_received=1;
 
 
         }
 
 
-        if(timercount%15==0){
+        if(timercount%5==0){
         	conttrolflag=1;
         }
 
@@ -1169,10 +1162,10 @@ void TIM2_IRQHandler()
                      }
 
         if(timercount%10000==0){
-            	setX=-25;
+            //	setX=-25;
                }
                if(timercount%20000==0){
-            		setX=25;
+            //		setX=25;
                 }
 
                if(timercount%30000==0){

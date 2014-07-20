@@ -146,7 +146,7 @@ void init_USART2(uint32_t baudrate){
     USART_ITConfig(USART2, USART_IT_RXNE, ENABLE); // enable the USART1 receive interrupt
 
         	NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;		 // we want to configure the USART1 interrupts
-        	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;// this sets the priority group of the USART1 interrupts
+        	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;// this sets the priority group of the USART1 interrupts
         	NVIC_InitStructure.NVIC_IRQChannelSubPriority =0;		 // this sets the subpriority inside the group
         	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			 // the USART1 interrupts are globally enabled
         	NVIC_Init(&NVIC_InitStructure);							 // the properties are passed to the NVIC_Init function which takes care of the low level stuff
@@ -307,7 +307,7 @@ void USART3_IRQHandler(void){
 
 	}
 void USART2_IRQHandler(void){
-
+	GPIOD->BSRRL = 0x4000; // set PD1
 	// check if the USART4 receive interrupt flag was set
 	if( USART_GetITStatus(USART2, USART_IT_RXNE) ){
 
@@ -315,9 +315,9 @@ void USART2_IRQHandler(void){
 		char t = USART2->DR; // the character from the USART1 data register is saved in t
 
 		if(expect_received==1){
-
+if(t==0x31){
 				expect_received=2;
-
+}
 
 
 		}
@@ -328,11 +328,50 @@ void USART2_IRQHandler(void){
 
 		}
 
-		if(bufcount>20){
-
+		if(bufcount>23){
+			mutex=1;
 			expect_received=0;
 			received_msg=1;
 			bufcount=0;
+			int16_t checksumself;
+			  OUT:
+			                DM_cmd=receivedmsg[0];
+					        DM_roll_cal=((receivedmsg[1]<<8)+(receivedmsg[2]));
+					        DM_roll=DM_roll_cal*360/65536;
+					        DM_pitch_cal=((receivedmsg[3]<<8)+(receivedmsg[4]));
+					        DM_pitch=DM_pitch_cal*360/65536;
+					        DM_raw_cal=((receivedmsg[5]<<8)+(receivedmsg[6]));
+					        DM_raw=DM_raw_cal*360/65536;
+		//			        DM_AccelX_cal,DM_AccelY_cal,DM_AccelZ_cal,DM_CompAngRateX_cal,DM_CompAngRateY_cal,DM_CompAngRateZ_cal,DM_TimerTicks_cal;
+			//DM_AccelX
+
+					       DM_AccelX_cal=((receivedmsg[7]<<8)+(receivedmsg[8]));
+					        DM_AccelY_cal=((receivedmsg[9]<<8)+(receivedmsg[10]));
+					        DM_AccelZ_cal=((receivedmsg[11]<<8)+(receivedmsg[12]));
+					        DM_CompAngRateX_cal=((receivedmsg[13]<<8)+(receivedmsg[14]));
+					        DM_CompAngRateY_cal=((receivedmsg[15]<<8)+(receivedmsg[16]));
+					        DM_CompAngRateZ_cal=((receivedmsg[17]<<8)+(receivedmsg[18]));
+
+					      DM_TimerTicks_cal=((receivedmsg[19]<<8)+(receivedmsg[20]));
+					      checksum=((receivedmsg[21]<<8)+(receivedmsg[22]));
+					      checksumself=DM_cmd+DM_roll_cal+DM_pitch_cal+DM_raw_cal+DM_AccelX_cal+ DM_AccelY_cal+DM_AccelZ_cal+DM_CompAngRateX_cal+DM_CompAngRateY_cal+DM_CompAngRateZ_cal+DM_TimerTicks_cal;
+
+
+					        if(checksumself!=checksum){
+
+					        	 CRCvalidation=1;
+
+					        }
+
+					        if(checksumself==checksum){
+					        	 CRCvalidation=0;
+
+					        					        }
+
+					        mutex=0;
+
+
+
 
 		}
 
@@ -340,7 +379,7 @@ void USART2_IRQHandler(void){
 
 		}
 
-
+	  GPIOD->BSRRH = 0x4000; // reset PD1
 	}
 
 
@@ -438,7 +477,7 @@ I2C_Init(I2C1, &I2C_InitStruct);	// init I2C1
 
 /*Configure the SPI interrupt priority*/
 NVIC_InitStructure.NVIC_IRQChannel = I2C1_EV_IRQn;
-NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
 NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 NVIC_Init(&NVIC_InitStructure);
