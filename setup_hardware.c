@@ -370,6 +370,7 @@ if(t==0x31){
 					        DM_CompAngRateY_cal=((receivedmsg[15]<<8)+(receivedmsg[16]));
 					        DM_CompAngRateZ_cal=((receivedmsg[17]<<8)+(receivedmsg[18]));
 					        DM_CompAngRateX=(DM_CompAngRateX_cal/GyroGain)*180/PI;
+					        DM_CompAngRateY=(DM_CompAngRateY_cal/GyroGain)*180/PI;
 					        //  Gyro_sensitivity
 					      DM_TimerTicks_cal=((receivedmsg[19]<<8)+(receivedmsg[20]));
 					      checksum=((receivedmsg[21]<<8)+(receivedmsg[22]));

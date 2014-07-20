@@ -53,7 +53,7 @@ int16_t receivedmsg[25];
 int manualradio=14000;
 #define Logbuf 500 //
 int PIDoption=1;  // 0= Gyro , 1 =Angle
-float PGain=2,PgainX=10,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight,ErrorH=0,GH=0.0005;
+float PGain=10,PgainX=10,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight,ErrorH=0,GH=0.0005;
 float IGain=0,Dgain=14,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
 float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5;
@@ -116,7 +116,7 @@ int PID_Start=0;
 float m1m3_rpm,m2m4_rpm,average_rpm,m1Rcompensate,m2Rcompensate,m3Rcompensate,m4Rcompensate;
 float M1Radio_in,M2Radio_in,M3Radio_in,M4Radio_in;
 
-float DM_roll,DM_pitch,DM_raw,DM_CompAngRateX,GyroGain;
+float DM_roll,DM_pitch,DM_raw,DM_CompAngRateX,GyroGain,DM_CompAngRateY;
 int16_t  DM_cmd,DM_roll_cal,DM_pitch_cal,DM_raw_cal,DM_AccelX_cal,DM_AccelY_cal,DM_AccelZ_cal,DM_CompAngRateX_cal,DM_CompAngRateY_cal,DM_CompAngRateZ_cal,DM_TimerTicks_cal,checksum;
 //int16_t  DM_cmd;
 int16_t CRCvalidation=0,Gyro_sensitivity=0;
@@ -592,7 +592,7 @@ if(serialflag==1){
 
     serial_output("ErrX=\t%c%d.%d\t",Csign(ErrorX),C1(ErrorX),C2(ErrorX));
 
-  //  serial_output("Yangle= \t%c%d.%d\t",Csign(Ayr),C1(Ayr),C2(Ayr));
+    serial_output("Yangle= \t%c%d.%d\t",Csign(Ayr),C1(Ayr),C2(Ayr));
   //  serial_output("ErrY=\t%c%d.%d\t",Csign(ErrorY),C1(ErrorY),C2(ErrorY));
 
  //   serial_output("PIDRateY=\t%c%d.%d\t",Csign(PIDRateY),C1(PIDRateY),C2(PIDRateY));
@@ -779,8 +779,8 @@ void ControlLoop(){
           //--------Begin PID correction----------
 
 
-
 /*
+
 
 
 	 GyroXvalue=(MPU9150_readSensor(MPU9150_GYRO_XOUT_L,MPU9150_GYRO_XOUT_H));
@@ -845,9 +845,11 @@ void ControlLoop(){
 //----------- End adding  IMU
 
 
-	float SDM_pitch;
+	float SDM_pitch,SDM_roll;
 if(CRCvalidation==0){
 	SDM_pitch=DM_pitch;
+	SDM_roll= DM_roll;
+
 if(DM_pitch<-3){
 								int kg=0;
 								kg=kg+1;
@@ -857,7 +859,7 @@ if(DM_pitch<-3){
 
 
 		   ErrorX=setX-SDM_pitch;//Axr
-		   ErrorY=setY-Ayr;
+		   ErrorY=setY-SDM_roll;
 		 //  ErrorH=setheight-DutyCycle2;
 
            if( (flightmode==1)){
@@ -965,7 +967,7 @@ if(DM_pitch<-3){
 								int_errY=int_errY + ErrorY;
 								p_termy=PGain*ErrorY;
 								i_termy=IGain*int_errY;
-								d_termy=Dgain*(err_diffY/0.07);
+								d_termy=Dgain*(err_diffY/0.02);
 								pidy=p_termy+d_termy+i_termy;
 								PreviousErrY=ErrorY;
 
@@ -998,7 +1000,7 @@ if(DM_pitch<-3){
 
 //----------------- Temp disable to test Rate Gyro------------------------------------------------------------------------
 						//RatePIDY
-								    ErrRateY=pidy-RyGyroR;
+								    ErrRateY=pidy-DM_CompAngRateY;
 								 	PtermRateY=	ErrRateY*RateYPG;
 								 	DiffErrRateY=ErrRateY-PreviousErrRateY;
 								 	DtermRateY=DiffErrRateY*RateYDG;
@@ -1028,18 +1030,18 @@ if(DM_pitch<-3){
 
 
 									 if(PIDoption==0){
-									   M2= M2Radio_in+PIDRateX;//;//+PIDRateY
-									   M1= M1Radio_in+PIDRateX;//;//-PIDRateY
+									   M2= M2Radio_in+PIDRateX+PIDRateY;//;//+PIDRateY
+									   M1= M1Radio_in+PIDRateX-PIDRateY;//;//-PIDRateY
                                       //---------------XASIS -----------------------------------
-									   M3= M3Radio_in-PIDRateX;//;//+PIDRateY
-									   M4= M4Radio_in-PIDRateX;//;//-PIDRateY
+									   M3= M3Radio_in-PIDRateX+PIDRateY;//;//+PIDRateY
+									   M4= M4Radio_in-PIDRateX-PIDRateY;//;//-PIDRateY
 									 }
 									 if(PIDoption==1){
-																		   M2= M2Radio_in+pidx;//;//+PIDRateY
-																		   M1= M1Radio_in+pidx;//;//-PIDRateY
+																		   M2= M2Radio_in+pidx+pidy;//;//+PIDRateY
+																		   M1= M1Radio_in+pidx-pidy;//;//-PIDRateY
 									                                      //---------------XASIS -----------------------------------
-																		   M3= M3Radio_in-pidx;//;//+PIDRateY
-																		   M4= M4Radio_in-pidx;//;//-PIDRateY
+																		   M3= M3Radio_in-pidx+pidy;//;//+PIDRateY
+																		   M4= M4Radio_in-pidx-pidy;//;//-PIDRateY
 																		 }
 
 
@@ -1189,7 +1191,7 @@ void TIM2_IRQHandler()
                      }
 
         if(timercount%10000==0){
-            	setX=-25;
+            	setY=-25;
                }
 
 
@@ -1198,7 +1200,7 @@ void TIM2_IRQHandler()
                 //             }
 
                if(timercount%20000==0){
-                         		setX=0;
+                         		setY=0;
                              }
 
 
