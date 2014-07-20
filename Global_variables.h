@@ -33,9 +33,9 @@ extern int16_t receivedmsg[25];
 extern float PGain,ErrorX,ErrorY,setX,setY,setheight,ErrorH,GH;
 extern float IGain,Dgain,err_diffX,err_diffY,int_errX,int_errY,PreviousErrX,PreviousErrY; //Pgain=0.2 , Dgain=0.005 ,lIGain=0.005  best possible configuration
 extern int16_t AccXA[20],AccYA[20],AccZA[20],GyroXA[20],GyroYA[20],GyroZA[20];
-extern float DM_roll,DM_pitch,DM_raw;
+extern float DM_roll,DM_pitch,DM_raw,DM_CompAngRateX,GyroGain;
 extern int16_t  DM_cmd,DM_roll_cal,DM_pitch_cal,DM_raw_cal,DM_AccelX_cal,DM_AccelY_cal,DM_AccelZ_cal,DM_CompAngRateX_cal,DM_CompAngRateY_cal,DM_CompAngRateZ_cal,DM_TimerTicks_cal,checksum;
-extern int16_t mutex,CRCvalidation,Gyro_sensitivity,DM_CompAngRateX;
+extern int16_t mutex,CRCvalidation,Gyro_sensitivity;
 //extern int16_t DM_cmd;
 
 //Radio status state machine

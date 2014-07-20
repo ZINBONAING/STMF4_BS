@@ -52,8 +52,8 @@ int16_t receivedmsg[25];
 //Pagin =4.6, Xgain =7 ,
 int manualradio=14000;
 #define Logbuf 500 //
-float PGain=2,PgainX=8,ErrorX=0,ErrorY=0,setX=-25,setY=0,setheight,ErrorH=0,GH=0.0005;
-float IGain=0,Dgain=16,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
+float PGain=2,PgainX=4,ErrorX=0,ErrorY=0,setX=-25,setY=0,setheight,ErrorH=0,GH=0.0005;
+float IGain=0,Dgain=6,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
 float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5;
 float PreviousErrRateY,ErrRateY,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY;
@@ -115,10 +115,10 @@ int PID_Start=0;
 float m1m3_rpm,m2m4_rpm,average_rpm,m1Rcompensate,m2Rcompensate,m3Rcompensate,m4Rcompensate;
 float M1Radio_in,M2Radio_in,M3Radio_in,M4Radio_in;
 
-float DM_roll,DM_pitch,DM_raw;
+float DM_roll,DM_pitch,DM_raw,DM_CompAngRateX,GyroGain;
 int16_t  DM_cmd,DM_roll_cal,DM_pitch_cal,DM_raw_cal,DM_AccelX_cal,DM_AccelY_cal,DM_AccelZ_cal,DM_CompAngRateX_cal,DM_CompAngRateY_cal,DM_CompAngRateZ_cal,DM_TimerTicks_cal,checksum;
 //int16_t  DM_cmd;
-int16_t CRCvalidation=0,Gyro_sensitivity=0,DM_CompAngRateX;
+int16_t CRCvalidation=0,Gyro_sensitivity=0;
 //end Radio status state machine
 void PWMinput_radioCH3(void);
 void  UART2_sendbyte(uint8_t);
@@ -444,6 +444,7 @@ Delay(50000);
 Delay(50000);
 
 }
+GyroGain=(32768000/ Gyro_sensitivity);
 expect_received=0;
   /* This flashed the LEDs on the board once
    * Two registers are used to set the pins (pin level is VCC)
@@ -1006,7 +1007,7 @@ if(DM_pitch<-3){
 						   //End Rate PID Y
 
 						  //	 RatePIDX
-								 	ErrRateX=pidx-RxGyroR;
+								 	ErrRateX=pidx-DM_CompAngRateX;
 								 	PtermRateX=	ErrRateX*RateXPG;
 								 	DiffErrRateX=ErrRateX-PreviousErrRateX;
 								 	DtermRateX=DiffErrRateX*RateXDG;
@@ -1024,11 +1025,11 @@ if(DM_pitch<-3){
 						//		M4=radioin-PIDRateY;//;//+(GH*ErrorH);+(GH*ErrorH); +pidx
 								 if(flightmode==0){
 
-									   M2= M2Radio_in+pidx;//;//+PIDRateY
-									   M1= M1Radio_in+pidx;//;//-PIDRateY
+									   M2= M2Radio_in+PIDRateX;//;//+PIDRateY
+									   M1= M1Radio_in+PIDRateX;//;//-PIDRateY
                                       //---------------XASIS -----------------------------------
-									   M3= M3Radio_in-pidx;//;//+PIDRateY
-									   M4= M4Radio_in-pidx;//;//-PIDRateY
+									   M3= M3Radio_in-PIDRateX;//;//+PIDRateY
+									   M4= M4Radio_in-PIDRateX;//;//-PIDRateY
 
 								 }
 

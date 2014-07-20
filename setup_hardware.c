@@ -346,7 +346,7 @@ if(t==0x31){
 						bufcount=0;
 
 		}
-		if((expect_received==1)&(bufcount>23)){
+		if((bufcount>23)){ //(expect_received==1)&
 			mutex=1;
 			expect_received=0;
 			received_msg=1;
@@ -369,7 +369,7 @@ if(t==0x31){
 					        DM_CompAngRateX_cal=((receivedmsg[13]<<8)+(receivedmsg[14]));
 					        DM_CompAngRateY_cal=((receivedmsg[15]<<8)+(receivedmsg[16]));
 					        DM_CompAngRateZ_cal=((receivedmsg[17]<<8)+(receivedmsg[18]));
-					      //  DM_CompAngRateX=DM_CompAngRateX_cal*(32768000/ Gyro_sensitivity);
+					        DM_CompAngRateX=(DM_CompAngRateX_cal/GyroGain)*180/PI;
 					        //  Gyro_sensitivity
 					      DM_TimerTicks_cal=((receivedmsg[19]<<8)+(receivedmsg[20]));
 					      checksum=((receivedmsg[21]<<8)+(receivedmsg[22]));
