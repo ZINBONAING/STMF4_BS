@@ -400,7 +400,7 @@ PWMinput_sound();
 PWMinput_radioCH3();
 
 PWMinput_radioCH6();
-InitializeTimer2();
+//InitializeTimer2();
 
 
 Delay(50000);
@@ -412,6 +412,7 @@ Delay(50000);
 	Delay(50000);
 init_USART3(9600);
 init_USART2(38400);
+init_USART1();
 init_GPIO();
 uint8_t received_data2=0xF0;
 int sf;
@@ -424,12 +425,12 @@ for(sf=0;sf<24;sf++){
 
 
 
-MPUIni_init16();
+//MPUIni_init16();
 sensor_value=0;
-sensor_value=MPU9150_read1byte(MPU9150_PWR_MGMT_1);
+//sensor_value=MPU9150_read1byte(MPU9150_PWR_MGMT_1);
 serial_output("PWRMG1 = %x ",sensor_value);
 sensor_value=MPU9150_read1byte(MPU9150_WHO_AM_I);
-serial_output("I am MPU = %x ",sensor_value);
+//serial_output("I am MPU = %x ",sensor_value);
 int cntG;
 for(cntG=0;cntG<3;cntG++){
 UART2_sendbyte(0x28);
@@ -463,7 +464,7 @@ expect_received=0;
 
 
   StartMotor=0;
-
+while(1);
 
 
     //	TIM_SetCompare1(TIM1, 9500); //M1 --3153 rpm
