@@ -1192,7 +1192,7 @@ void InitPWM4(){
 void PWMinput_sound(void)
 {
 
-	TIM_ICInitTypeDef  TIM_ICInitStructure;
+TIM_ICInitTypeDef  TIM_ICInitStructure;
   GPIO_InitTypeDef GPIO_InitStructure;
   NVIC_InitTypeDef NVIC_InitStructure;
 
@@ -1222,7 +1222,7 @@ void PWMinput_sound(void)
 
   /* Enable the TIM4 global Interrupt */
   NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 4; //0
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 7; //0
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);

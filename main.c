@@ -77,7 +77,7 @@ float temperrX,temperrY;
 int flightmode=0;
 #define I2C_TIMEOUT  (0x5)
 #define PI 3.14159265358979
-float MXlimit=13000;
+float MXlimit=16000;
 #define MNlimit 8100
 #define step 100
 
@@ -403,7 +403,7 @@ PWMinput_sound();
 PWMinput_radioCH3();
 
 PWMinput_radioCH6();
-//InitializeTimer2();
+InitializeTimer2();
 
 
 Delay(50000);
@@ -467,7 +467,7 @@ expect_received=0;
 
 
   StartMotor=0;
-while(1);
+
 
 
     //	TIM_SetCompare1(TIM1, 9500); //M1 --3153 rpm
@@ -510,27 +510,28 @@ if(serialflag==1){
   //  serial_output("%c%d.%d,",Csign(RxAccR),C1(RxAccR),C2(RxAccR));
   //  serial_output("%c%d.%d,",Csign(RyAccR),C1(RyAccR),C2(RyAccR));
   //  serial_output("%c%d.%d,",Csign(RzAccR),C1(RzAccR),C2(RzAccR));
-	/*
+	serial_output("Roll:\t%c%d.%d\t",Csign(DM_roll),C1(DM_roll),C2(DM_roll));
+	 serial_output("Pitch:\t%c%d.%d\t",Csign(DM_pitch),C1(DM_pitch),C2(DM_pitch));
+	 serial_output("raw:\t%c%d.%d\t",Csign(DM_raw),C1(DM_raw),C2(DM_raw));
    serial_output("%c%d.%d\t",Csign(M1Radio_in),C1(M1Radio_in),C2(M1Radio_in));
    serial_output("%c%d.%d\t",Csign(M2Radio_in),C1(M2Radio_in),C2(M2Radio_in));
    serial_output("%c%d.%d\t",Csign(M3Radio_in),C1(M3Radio_in),C2(M3Radio_in));
    serial_output("%c%d.%d\t",Csign(M4Radio_in),C1(M4Radio_in),C2(M4Radio_in));
-*/
+
 	//   serial_output("%c%d.%d\t",Csign(M1),C1(M1),C2(M1));
 	 //  serial_output("%c%d.%d\t",Csign(M2),C1(M2),C2(M2));
 	//   serial_output("%c%d.%d\t",Csign(M3),C1(M3),C2(M3));
 	//   serial_output("%c%d.%d\t",Csign(M4),C1(M4),C2(M4));
 
-   serial_output("GyroX:\t%c%d.%d\t",Csign(RxGyroR),C1(RxGyroR),C2(RxGyroR));
-   serial_output("GyroXRAW:\t%c%d.%d\t",Csign(GyroXvalue),C1(GyroXvalue),C2(GyroXvalue));
-   serial_output("ErrRateX :\t%c%d.%d\t",Csign(ErrRateX),C1(ErrRateX),C2(ErrRateX));
+ //  serial_output("GyroX:\t%c%d.%d\t",Csign(RxGyroR),C1(RxGyroR),C2(RxGyroR));
+ //  serial_output("GyroXRAW:\t%c%d.%d\t",Csign(GyroXvalue),C1(GyroXvalue),C2(GyroXvalue));
+ //  serial_output("ErrRateX :\t%c%d.%d\t",Csign(ErrRateX),C1(ErrRateX),C2(ErrRateX));
    serial_output("XAngle PID:\t%c%d.%d\t",Csign(pidx),C1(pidx),C2(pidx));
-   serial_output("XRatePID :\t%c%d.%d\t",Csign(PIDRateX),C1(PIDRateX),C2(PIDRateX));
+   serial_output("YAngle PID:\t%c%d.%d\t",Csign(pidy),C1(pidy),C2(pidy));
+   //serial_output("XRatePID :\t%c%d.%d\t",Csign(PIDRateX),C1(PIDRateX),C2(PIDRateX));
 
- serial_output("Roll:\t%c%d.%d\t",Csign(DM_roll),C1(DM_roll),C2(DM_roll));
- serial_output("Pitch:\t%c%d.%d\t",Csign(DM_pitch),C1(DM_pitch),C2(DM_pitch));
- serial_output("raw:\t%c%d.%d\t",Csign(DM_raw),C1(DM_raw),C2(DM_raw));
- serial_output("DM_CompAngRateX:\t%c%d.%d\t",Csign(DM_CompAngRateX),C1(DM_CompAngRateX),C2(DM_CompAngRateX));
+
+ //serial_output("DM_CompAngRateX:\t%c%d.%d\t",Csign(DM_CompAngRateX),C1(DM_CompAngRateX),C2(DM_CompAngRateX));
 
  //serial_output("Gyro Sensitivity %d,",Gyro_sensitivity);
 
@@ -567,9 +568,9 @@ if(serialflag==1){
   //  serial_output("%d,",M3);
   //  serial_output("%d,",M4);
  //   serial_output("%d,",sensorheight);
-   // serial_output("Height %c%d.%d cm,",Csign(sensorheight),C1(sensorheight),C2(sensorheight));
+   serial_output("Height %c%d.%d cm,",Csign(sensorheight),C1(sensorheight),C2(sensorheight));
    // serial_output("motor=%d,",StartMotor);
-  //  serial_output("FlightMode=%d,",flightmode);
+    serial_output("FlightMode=%d,",flightmode);
    //serial_output("%c%d.%d,",Csign(ErrorH),C1(ErrorH),C2(ErrorH));
   // temperrX=ErrorX*100;
    // temperrY=ErrorY*100;
@@ -587,16 +588,16 @@ if(serialflag==1){
  //   ErrorH=setheight
 
   //  serial_output("ErrorH:%c%d.%d\t",Csign(ErrorH),C1(ErrorH),C2(ErrorH));
-  //  serial_output("setheight:%c%d.%d cm \t",Csign(setheight),C1(setheight),C2(setheight));
+    serial_output("setheight:\t%c%d.%d cm \t",Csign(setheight),C1(setheight),C2(setheight));
 
 
-    serial_output("Xangle= \t%c%d.%d\t",Csign(Axr),C1(Axr),C2(Axr));
-    serial_output("AccAngleX= \t%c%d.%d\t",Csign(AccAngleX),C1(AccAngleX),C2(AccAngleX));
-    serial_output("GyroAngleX= \t%c%d.%d\t",Csign(Axz*180/PI),C1(Axz*180/PI),C2(Axz*180/PI));
+  //  serial_output("Xangle= \t%c%d.%d\t",Csign(Axr),C1(Axr),C2(Axr));
+  //  serial_output("AccAngleX= \t%c%d.%d\t",Csign(AccAngleX),C1(AccAngleX),C2(AccAngleX));
+  //  serial_output("GyroAngleX= \t%c%d.%d\t",Csign(Axz*180/PI),C1(Axz*180/PI),C2(Axz*180/PI));
 
     serial_output("ErrX=\t%c%d.%d\t",Csign(ErrorX),C1(ErrorX),C2(ErrorX));
 
-    serial_output("Yangle= \t%c%d.%d\t",Csign(Ayr),C1(Ayr),C2(Ayr));
+   // serial_output("Yangle= \t%c%d.%d\t",Csign(Ayr),C1(Ayr),C2(Ayr));
   //  serial_output("ErrY=\t%c%d.%d\t",Csign(ErrorY),C1(ErrorY),C2(ErrorY));
 
  //   serial_output("PIDRateY=\t%c%d.%d\t",Csign(PIDRateY),C1(PIDRateY),C2(PIDRateY));
@@ -842,23 +843,10 @@ void ControlLoop(){
 
 
 
-
-
-
-
-//----------- End adding  IMU
-
-
 	float SDM_pitch,SDM_roll;
 if(CRCvalidation==0){
 	SDM_pitch=DM_pitch;
 	SDM_roll= DM_roll;
-
-if(DM_pitch<-3){
-								int kg=0;
-								kg=kg+1;
-
-					        }
 }
 
 
@@ -866,58 +854,6 @@ if(DM_pitch<-3){
 		   ErrorY=setY-SDM_roll;
 		 //  ErrorH=setheight-DutyCycle2;
 
-           if( (flightmode==1)){
-        	   int k;
-        	   	            	float sampletime=0;
-        	   	            	  StartMotor=0;
-        	   	            		            	TIM_SetCompare1(TIM1, 8100);
-        	   	            		            	TIM_SetCompare2(TIM1, 8100);
-        	   	            		            	TIM_SetCompare3(TIM1, 8100);
-        	   	            		            	TIM_SetCompare4(TIM1, 8100);
-        	   	            		            	TIM_Cmd(TIM2, DISABLE);
-        	   	            		            	 for(k=0;k<500;k++){
-
-        	   	            		            			                sampletime=k;
-        	   	            		            			                serial_output("%d\t",k);
-        	   	            		            			             Delay(5000);
-        	   	            		            			                serial_output("Rin:\t%c%d.%d\t",Csign(Radioinx[k]),C1(Radioinx[k]),C2(Radioinx[k]));
-        	   	            		            			             Delay(10000);
-        	   	            		            			          serial_output("CurrentX:\t%c%d.%d\t",Csign(CurrentX[k]),C1(CurrentX[k]),C2(CurrentX[k]));
-        	   	            		            			                 	   	            		            			             Delay(10000);
-
-
-        	   	            		            			                serial_output("M1\t%c%d.%d\t",Csign(M1x[k]),C1(M1x[k]),C2(M1x[k]));
-        	   	            		            			             Delay(10000);
-        	   	            		            			                serial_output("M2\t%c%d.%d\t",Csign(M2x[k]),C1(M2x[k]),C2(M2x[k]));
-        	   	            		            			             Delay(10000);
-        	   	            		            			                serial_output("M3\t%c%d.%d\t",Csign(M3x[k]),C1(M3x[k]),C2(M3x[k]));
-        	   	            		            			             Delay(10000);
-        	   	            		            			                serial_output("M4\t%c%d.%d\t",Csign(M4x[k]),C1(M4x[k]),C2(M4x[k]));
-        	   	            		            			             Delay(10000);
-        	   	            		            				           serial_output("P\t%c%d.%d\t",Csign(Ptermx[k]),C1(Ptermx[k]),C2(Ptermx[k]));
-        	   	            		            				        Delay(5000);
-        	   	            		            				           serial_output("D\t%c%d.%d\t",Csign(Dtermx[k]),C1(Dtermx[k]),C2(Dtermx[k]));
-        	   	            		            				        Delay(5000);
-        	   	            		            				           serial_output("PID:\t\t%c%d.%d\t",Csign(PIDx[k]),C1(PIDx[k]),C2(PIDx[k]));
-        	   	            		            				        Delay(5000);
-        	   	            		            				     serial_output("SetX:\t\t%c%d.%d\t",Csign(setX),C1(setX),C2(setX));
-        	   	            		            				          // serial_output("Set\t\t%c%d.%d\t",Csign(setX),C1(setX),C2(setX));
-        	   	            		            				        Delay(5000);
-        	   	            		            				     serial_output("PGain:\t\t%c%d.%d\t",Csign(PGain),C1(PGain),C2(PGain));
-        	   	            		            				        //   serial_output("PG\t\t%c%d.%d\t",Csign(PGain),C1(PGain),C2(PGain));
-        	   	            		            				        Delay(5000);
-        	   	            		            				     //      serial_output("DG\t\t%c%d.%d\t",Csign(Dgain),C1(Dgain),C2(Dgain));
-        	   	            		            				        serial_output("Dgain:\t\t%c%d.%d\t",Csign(Dgain),C1(Dgain),C2(Dgain));
-        	   	            		            				        Delay(5000);
-        	   	            		            				           serial_output("Err\t%c%d.%d\t",Csign( XErrbuffer[k]),C1(XErrbuffer[k]),C2(XErrbuffer[k]));
-
-        	   	            		            				           serial_output("\n");
-
-        	   	            			                }
-
-
-
-           }
 
 		   if((Radio_status==1)){
 
@@ -976,28 +912,19 @@ if(DM_pitch<-3){
 								PreviousErrY=ErrorY;
 
 
-							//	if(((ErrorY<2) && (ErrorY>-2)) && ((ErrorX<2) && (ErrorX>-2))){
-								if( ErrorX==0){
-																	 StableMode=1;
-
-																 }
-																 else
-																 {
-																	 StableMode=0;
-																 }
 
 
-								 if((ErrorY<2) && (ErrorY>-2)) {int_errY=0;IntErrRateY=0; }
-								 if((ErrorX<2) && (ErrorX>-2)) {int_errX=0; IntErrRateX=0;}
 
-								 if(StableMode==1){
+								 if((ErrorY<1) && (ErrorY>-1)) {int_errY=0;IntErrRateY=0; }
+								 if((ErrorX<1) && (ErrorX>-1)) {int_errX=0; IntErrRateX=0;}
+
+
 
 									 if((flightmode==1)&(PreviousFlightMode!=flightmode)){   //Altitude Hold Mode just entered
 										 setheight=sensorheight;
  									 }
 									 PreviousFlightMode=flightmode;
 
-								 }
 
 
 
@@ -1024,13 +951,7 @@ if(DM_pitch<-3){
 						 //    End Rate PID XY
 
 
-						//		M2=radioin+PIDRateY;//;//+(GH*ErrorH); -pidx
-						//		M3=radioin+PIDRateY;//;//+(GH*ErrorH);+(GH*ErrorH); -pidx
 
-
-						//		M1=radioin-PIDRateY;//;//+(GH*ErrorH);+(GH*ErrorH); +pidx
-						//		M4=radioin-PIDRateY;//;//+(GH*ErrorH);+(GH*ErrorH); +pidx
-								 if(flightmode==0){
 
 
 									 if(PIDoption==0){
@@ -1049,7 +970,7 @@ if(DM_pitch<-3){
 																		 }
 
 
-								 }
+
 
 
                                     if(flightmode==1){
@@ -1150,7 +1071,7 @@ void TIM2_IRQHandler()
         	timercount=5000;
         }
 
-        if(timercount%300==0){
+        if(timercount%100==0){
         	serialflag=1;
         }
 
@@ -1195,7 +1116,7 @@ void TIM2_IRQHandler()
                      }
 
         if(timercount%10000==0){
-            	setY=-25;
+       //     	setY=-25;
                }
 
 
@@ -1204,7 +1125,7 @@ void TIM2_IRQHandler()
                 //             }
 
                if(timercount%20000==0){
-                         		setY=0;
+                         		//setY=0;
                              }
 
 
@@ -1312,3 +1233,72 @@ else
 }
 }
 
+/*
+ *
+ *  Debug logging ---
+ *
+ *
+            if( (flightmode==1)){
+        	   int k;
+        	   	            	float sampletime=0;
+        	   	            	  StartMotor=0;
+        	   	            		            	TIM_SetCompare1(TIM1, 8100);
+        	   	            		            	TIM_SetCompare2(TIM1, 8100);
+        	   	            		            	TIM_SetCompare3(TIM1, 8100);
+        	   	            		            	TIM_SetCompare4(TIM1, 8100);
+        	   	            		            	TIM_Cmd(TIM2, DISABLE);
+        	   	            		            	 for(k=0;k<500;k++){
+
+        	   	            		            			                sampletime=k;
+        	   	            		            			                serial_output("%d\t",k);
+        	   	            		            			             Delay(5000);
+        	   	            		            			                serial_output("Rin:\t%c%d.%d\t",Csign(Radioinx[k]),C1(Radioinx[k]),C2(Radioinx[k]));
+        	   	            		            			             Delay(10000);
+        	   	            		            			          serial_output("CurrentX:\t%c%d.%d\t",Csign(CurrentX[k]),C1(CurrentX[k]),C2(CurrentX[k]));
+        	   	            		            			                 	   	            		            			             Delay(10000);
+
+
+        	   	            		            			                serial_output("M1\t%c%d.%d\t",Csign(M1x[k]),C1(M1x[k]),C2(M1x[k]));
+        	   	            		            			             Delay(10000);
+        	   	            		            			                serial_output("M2\t%c%d.%d\t",Csign(M2x[k]),C1(M2x[k]),C2(M2x[k]));
+        	   	            		            			             Delay(10000);
+        	   	            		            			                serial_output("M3\t%c%d.%d\t",Csign(M3x[k]),C1(M3x[k]),C2(M3x[k]));
+        	   	            		            			             Delay(10000);
+        	   	            		            			                serial_output("M4\t%c%d.%d\t",Csign(M4x[k]),C1(M4x[k]),C2(M4x[k]));
+        	   	            		            			             Delay(10000);
+        	   	            		            				           serial_output("P\t%c%d.%d\t",Csign(Ptermx[k]),C1(Ptermx[k]),C2(Ptermx[k]));
+        	   	            		            				        Delay(5000);
+        	   	            		            				           serial_output("D\t%c%d.%d\t",Csign(Dtermx[k]),C1(Dtermx[k]),C2(Dtermx[k]));
+        	   	            		            				        Delay(5000);
+        	   	            		            				           serial_output("PID:\t\t%c%d.%d\t",Csign(PIDx[k]),C1(PIDx[k]),C2(PIDx[k]));
+        	   	            		            				        Delay(5000);
+        	   	            		            				     serial_output("SetX:\t\t%c%d.%d\t",Csign(setX),C1(setX),C2(setX));
+        	   	            		            				          // serial_output("Set\t\t%c%d.%d\t",Csign(setX),C1(setX),C2(setX));
+        	   	            		            				        Delay(5000);
+        	   	            		            				     serial_output("PGain:\t\t%c%d.%d\t",Csign(PGain),C1(PGain),C2(PGain));
+        	   	            		            				        //   serial_output("PG\t\t%c%d.%d\t",Csign(PGain),C1(PGain),C2(PGain));
+        	   	            		            				        Delay(5000);
+        	   	            		            				     //      serial_output("DG\t\t%c%d.%d\t",Csign(Dgain),C1(Dgain),C2(Dgain));
+        	   	            		            				        serial_output("Dgain:\t\t%c%d.%d\t",Csign(Dgain),C1(Dgain),C2(Dgain));
+        	   	            		            				        Delay(5000);
+        	   	            		            				           serial_output("Err\t%c%d.%d\t",Csign( XErrbuffer[k]),C1(XErrbuffer[k]),C2(XErrbuffer[k]));
+
+        	   	            		            				           serial_output("\n");
+
+        	   	            			                }
+
+
+
+           }
+
+ *
+ *
+ *
+ *
+ *
+ *
+ * */
+
+/*
+ *
+ */
