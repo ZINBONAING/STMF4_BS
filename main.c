@@ -390,6 +390,9 @@ int ki;
 */
 int sensor_value=0;
 
+float heading,lat1=1.344026,lon1,lat2,lon2,headb;
+
+
 I2C1_init(); // initialize I2C peripheral
 InitPWM();
 InitPWM2();

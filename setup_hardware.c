@@ -8,6 +8,7 @@
 #include "stm32f4xx_rcc.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 #include <misc.h>			 // I recommend you have a look at these in the ST firmware folder
 #include <math.h>
@@ -16,13 +17,17 @@
 #include <Global_variables.h>
 int Buf_counter=0, bufcount=0;
 char GPS_Received[100];
-int GPS_bufcounter=0;
+int GPS_bufcounter=0,GPS_ns=0,GPS_RDY=0,GPS_capture;
 
 
 
 
 
-
+double x[30];
+int xcounter=0;
+int latdeg,londeg;
+	    		      double latmin,lonmin;
+	    		      double lat,lon;
 void init_USART3(uint32_t baudrate){
 
 	/* This is a concept that has to do with the libraries provided by ST
@@ -151,6 +156,7 @@ void init_USART1(uint32_t baudrate){
         	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			 // the USART1 interrupts are globally enabled
         	NVIC_Init(&NVIC_InitStructure);							 // the properties are passed to the NVIC_Init function which takes care of the low level stuff
     USART_Cmd(USART1, ENABLE);
+
 
 
 
@@ -382,6 +388,32 @@ void USART3_IRQHandler(void){
 
 void USART1_IRQHandler(void){
 
+/*
+ *
+ * Global Positioning System Fix Data
+
+eg1. $GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62
+eg2. $GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*68
+
+
+           225446       Time of fix 22:54:46 UTC
+           A            Navigation receiver warning A = OK, V = warning
+           4916.45,N    Latitude 49 deg. 16.45 min North
+           12311.12,W   Longitude 123 deg. 11.12 min West
+           000.5        Speed over ground, Knots
+           054.7        Course Made Good, True
+           191194       Date of fix  19 November 1994
+           020.3,E      Magnetic variation 20.3 deg East
+           *68          mandatory checksum
+ *
+ *
+ *
+ *
+ */
+
+	 const char s= ",";
+	   char *token;
+
 
 	// check if the USART4 receive interrupt flag was set
 	if( USART_GetITStatus(USART1, USART_IT_RXNE) ){
@@ -390,7 +422,83 @@ void USART1_IRQHandler(void){
 
 		static uint8_t cnt = 0; // this counter is used to determine the string length
 		char t = USART1->DR; // the character from the USART1 data register is saved int
+
+	    if(t=='$') GPS_ns=1;
+//#$GPRMA
+	    switch(GPS_ns){
+	    case 0:GPS_ns=0;break;
+	    case 1:if (t=='$') GPS_ns=2;else GPS_ns=0;break;
+        case 2:if (t=='G') GPS_ns=3;else GPS_ns=0;break;
+        case 3:if (t=='P') GPS_ns=4;else GPS_ns=0;break;
+        case 4:if (t=='R') GPS_ns=5;else GPS_ns=0;break;
+        case 5:if (t=='M') GPS_ns=6;else GPS_ns=0;break;
+        case 6:	if (t=='C')  GPS_capture=1;else GPS_ns=0;break;
+
+
+	    }
+
+	    if(GPS_capture==1){
 	    GPS_Received[GPS_bufcounter++]=t;
+	    	if(t=='\n'){
+
+	    		   int g;
+	    			    for (g=0;g<31;g++){
+	    			    	x[g]=0.0;
+
+	    			    }
+
+	    		GPS_bufcounter=0;
+	    		GPS_capture=0;
+	    		GPS_RDY=1;
+
+	    		  /* get the first token */
+	    		   token = strtok(GPS_Received,",");
+double xx;
+	    		   /* walk through other tokens */
+	    		   while( token != NULL )
+	    		   {
+	    		      token = strtok(NULL,",");
+
+
+	    		      xx= atof(token);     /* x = -2309.12E-15 */
+
+	    		      x[xcounter++] =xx;     /* x = -2309.12E-15 */
+	    		      if(xcounter==3){
+
+
+	    		    	  latdeg	=  xx/100.00;
+	    		    	  latmin=( xx-(latdeg*100))/60;
+	    		    	  lat=latdeg+latmin;
+
+
+	    		     	    		      }
+
+	    		      if(xcounter==5){
+
+
+	    		     	    		    	  londeg	=  xx/100.00;
+	    		     	    		    	  lonmin=( xx-(londeg*100))/60;
+	    		     	    		    	  lon=londeg+lonmin;
+
+
+	    		     	    		     	    		      }
+
+
+	    		   }
+	    		   xcounter=0;
+	    		   return(0);
+
+
+	    	}
+
+
+	    }
+
+
+
+
+
+
 if(GPS_bufcounter>99){
 	GPS_bufcounter=0;
 }
