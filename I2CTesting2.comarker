@@ -2,12 +2,27 @@
 <breakpoints>
 <breakpoint enabled="true" persistant="true" registered="true">
 <resource path="/I2CTesting2/setup_hardware.c" type="1"/>
-<marker lineNumber="488" type="org.eclipse.cdt.debug.core.cLineBreakpointMarker">
-<attrib name="message" value="Line breakpoint: setup_hardware.c [line: 488]"/>
+<marker lineNumber="508" type="org.eclipse.cdt.debug.core.cLineBreakpointMarker">
+<attrib name="message" value="Line breakpoint: setup_hardware.c [line: 508]"/>
 <attrib name="org.eclipse.cdt.debug.core.condition" value=""/>
 <attrib name="org.eclipse.debug.core.id" value="org.eclipse.cdt.debug.core"/>
 <attrib name="org.eclipse.cdt.debug.core.installCount" value="0"/>
 <attrib name="org.eclipse.cdt.debug.core.sourceHandle" value="C:\Users\308626\Dropbox\NTU\MscThesis\Github\STMF4_BS\STMF4_BS\setup_hardware.c"/>
+<attrib name="org.eclipse.cdt.debug.core.breakpointType" value="0"/>
+<attrib name="org.eclipse.cdt.debug.core.ignoreCount" value="0"/>
+<attrib name="org.eclipse.debug.core.enabled" value="true"/>
+<attrib name="workingset_name" value=""/>
+<attrib name="workingset_id" value="org.eclipse.debug.ui.breakpointWorkingSet"/>
+</marker>
+</breakpoint>
+<breakpoint enabled="true" persistant="true" registered="true">
+<resource path="/I2CTesting2/main.c" type="1"/>
+<marker lineNumber="1069" type="org.eclipse.cdt.debug.core.cLineBreakpointMarker">
+<attrib name="message" value="Line breakpoint: main.c [line: 1069]"/>
+<attrib name="org.eclipse.cdt.debug.core.condition" value=""/>
+<attrib name="org.eclipse.debug.core.id" value="org.eclipse.cdt.debug.core"/>
+<attrib name="org.eclipse.cdt.debug.core.installCount" value="0"/>
+<attrib name="org.eclipse.cdt.debug.core.sourceHandle" value="C:\Users\308626\Dropbox\NTU\MscThesis\Github\STMF4_BS\STMF4_BS\main.c"/>
 <attrib name="org.eclipse.cdt.debug.core.breakpointType" value="0"/>
 <attrib name="org.eclipse.cdt.debug.core.ignoreCount" value="0"/>
 <attrib name="org.eclipse.debug.core.enabled" value="true"/>
