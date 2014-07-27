@@ -1303,18 +1303,20 @@ void PWMinput_radioCH3(void)
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
 
   /* GPIOB clock enable */
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
 
   /* TIM4 chennel2 configuration : PB.07 */
-  GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_7;
+  GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_5 ;
   GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP ;
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
 
   /* Connect TIM pin to AF2 */
-  GPIO_PinAFConfig(GPIOC, GPIO_PinSource7, GPIO_AF_TIM3);
+  GPIO_PinAFConfig(GPIOB, GPIO_PinSource5, GPIO_AF_TIM3);
+
+
 
   /* Enable the TIM4 global Interrupt */
   NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
@@ -1330,7 +1332,7 @@ void PWMinput_radioCH3(void)
      The TIM4 CCR1 is used to compute the duty cycle value
   ------------------------------------------------------------ */
 
-  TIM_ICInitStructure.TIM_Channel = TIM_Channel_2;
+  TIM_ICInitStructure.TIM_Channel = TIM_Channel_2  ;
   TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
   TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
   TIM_ICInitStructure.TIM_ICPrescaler = 4;//TIM_ICPSC_DIV1;
@@ -1339,6 +1341,7 @@ void PWMinput_radioCH3(void)
   TIM_PWMIConfig(TIM3, &TIM_ICInitStructure);
 
   /* Select the TIM4 Input Trigger: TI2FP2 */
+
   TIM_SelectInputTrigger(TIM3, TIM_TS_TI2FP2);
 
   /* Select the slave Mode: Reset Mode */
@@ -1349,7 +1352,10 @@ void PWMinput_radioCH3(void)
   TIM_Cmd(TIM3, ENABLE);
 
   /* Enable the CC2 Interrupt Request */
+
   TIM_ITConfig(TIM3, TIM_IT_CC2, ENABLE);
+
+
 
 }
 void PWMinput_radioCH6(void)
@@ -1470,3 +1476,213 @@ void Delay1(__IO uint32_t nCount) {
   while(nCount--) {
   }
 }
+
+
+
+//---- New Radio Inputs ----- 27July14
+
+void PWMinput_radioCH1(void)
+{
+
+	TIM_ICInitTypeDef  TIM_ICInitStructure;
+  GPIO_InitTypeDef GPIO_InitStructure;
+  NVIC_InitTypeDef NVIC_InitStructure;
+
+  /* TIM4 clock enable */
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8, ENABLE);
+
+  /* GPIOB clock enable */
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+
+  /* TIM8 chennel2 configuration : PC.07 */
+  GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_7 ;
+  GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP ;
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+  /* Connect TIM pin to AF2 */
+  GPIO_PinAFConfig(GPIOC, GPIO_PinSource7, GPIO_AF_TIM8);
+
+
+
+  /* Enable the TIM4 global Interrupt */
+  NVIC_InitStructure.NVIC_IRQChannel = TIM8_CC_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1; //0
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+
+  /* TIM4 configuration: PWM Input mode ------------------------
+     The external signal is connected to TIM4 CH2 pin (PB.07),
+     The Rising edge is used as active edge,
+     The TIM4 CCR2 is used to compute the frequency value
+     The TIM4 CCR1 is used to compute the duty cycle value
+  ------------------------------------------------------------ */
+
+  TIM_ICInitStructure.TIM_Channel = TIM_Channel_2  ;
+  TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
+  TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
+  TIM_ICInitStructure.TIM_ICPrescaler = 4;//TIM_ICPSC_DIV1;
+  TIM_ICInitStructure.TIM_ICFilter = 0x0;
+
+  TIM_PWMIConfig(TIM8, &TIM_ICInitStructure);
+
+  /* Select the TIM4 Input Trigger: TI2FP2 */
+
+  TIM_SelectInputTrigger(TIM8, TIM_TS_TI2FP2);
+
+  /* Select the slave Mode: Reset Mode */
+  TIM_SelectSlaveMode(TIM8, TIM_SlaveMode_Reset);
+  TIM_SelectMasterSlaveMode(TIM8,TIM_MasterSlaveMode_Enable);
+
+  /* TIM enable counter */
+  TIM_Cmd(TIM8, ENABLE);
+
+  /* Enable the CC2 Interrupt Request */
+
+  TIM_ITConfig(TIM8, TIM_IT_CC2, ENABLE);
+
+
+
+}
+
+void PWMinput_radioCH2(void)
+{
+
+	TIM_ICInitTypeDef  TIM_ICInitStructure;
+  GPIO_InitTypeDef GPIO_InitStructure;
+  NVIC_InitTypeDef NVIC_InitStructure;
+
+  /* TIM4 clock enable */
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM12, ENABLE);
+
+  /* GPIOB clock enable */
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+
+  /* TIM8 chennel2 configuration : PC.07 */
+  GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_15 ;
+  GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP ;
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+  /* Connect TIM pin to AF2 */
+  GPIO_PinAFConfig(GPIOB, GPIO_PinSource15, GPIO_AF_TIM12);
+
+
+
+  /* Enable the TIM4 global Interrupt */
+  NVIC_InitStructure.NVIC_IRQChannel = TIM8_BRK_TIM12_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1; //0
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+
+  /* TIM4 configuration: PWM Input mode ------------------------
+     The external signal is connected to TIM4 CH2 pin (PB.07),
+     The Rising edge is used as active edge,
+     The TIM4 CCR2 is used to compute the frequency value
+     The TIM4 CCR1 is used to compute the duty cycle value
+  ------------------------------------------------------------ */
+
+  TIM_ICInitStructure.TIM_Channel = TIM_Channel_2  ;
+  TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
+  TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
+  TIM_ICInitStructure.TIM_ICPrescaler = 4;//TIM_ICPSC_DIV1;
+  TIM_ICInitStructure.TIM_ICFilter = 0x0;
+
+  TIM_PWMIConfig(TIM12, &TIM_ICInitStructure);
+
+  /* Select the TIM4 Input Trigger: TI2FP2 */
+
+  TIM_SelectInputTrigger(TIM12, TIM_TS_TI2FP2);
+
+  /* Select the slave Mode: Reset Mode */
+  TIM_SelectSlaveMode(TIM12, TIM_SlaveMode_Reset);
+  TIM_SelectMasterSlaveMode(TIM12,TIM_MasterSlaveMode_Enable);
+
+  /* TIM enable counter */
+  TIM_Cmd(TIM12, ENABLE);
+
+  /* Enable the CC2 Interrupt Request */
+
+  TIM_ITConfig(TIM12, TIM_IT_CC2, ENABLE);
+
+
+
+}
+
+
+void PWMinput_radioCH4(void)
+{
+
+	TIM_ICInitTypeDef  TIM_ICInitStructure;
+  GPIO_InitTypeDef GPIO_InitStructure;
+  NVIC_InitTypeDef NVIC_InitStructure;
+
+  /* TIM4 clock enable */
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM9, ENABLE);
+
+  /* GPIOB clock enable */
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+
+  /* TIM8 chennel2 configuration : PC.07 */
+  GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_3 ;
+  GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP ;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+  /* Connect TIM pin to AF2 */
+  GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_TIM9);
+
+
+
+  /* Enable the TIM4 global Interrupt */
+  NVIC_InitStructure.NVIC_IRQChannel = TIM1_BRK_TIM9_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1; //0
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 4;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+
+  /* TIM4 configuration: PWM Input mode ------------------------
+     The external signal is connected to TIM4 CH2 pin (PB.07),
+     The Rising edge is used as active edge,
+     The TIM4 CCR2 is used to compute the frequency value
+     The TIM4 CCR1 is used to compute the duty cycle value
+  ------------------------------------------------------------ */
+
+  TIM_ICInitStructure.TIM_Channel = TIM_Channel_2  ;
+  TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
+  TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
+  TIM_ICInitStructure.TIM_ICPrescaler = 4;//TIM_ICPSC_DIV1;
+  TIM_ICInitStructure.TIM_ICFilter = 0x0;
+
+  TIM_PWMIConfig(TIM9, &TIM_ICInitStructure);
+
+  /* Select the TIM4 Input Trigger: TI2FP2 */
+
+  TIM_SelectInputTrigger(TIM9, TIM_TS_TI2FP2);
+
+  /* Select the slave Mode: Reset Mode */
+  TIM_SelectSlaveMode(TIM9, TIM_SlaveMode_Reset);
+  TIM_SelectMasterSlaveMode(TIM9,TIM_MasterSlaveMode_Enable);
+
+  /* TIM enable counter */
+  TIM_Cmd(TIM9, ENABLE);
+
+  /* Enable the CC2 Interrupt Request */
+
+  TIM_ITConfig(TIM9, TIM_IT_CC2, ENABLE);
+
+
+
+}
+
+
+// ---- End new radio inputs ---- 27 July 14
+

@@ -89,6 +89,10 @@ float MXlimit=16000;
 
 int IC2Value_radio, DutyCycle_radio,DutyCycle2_radio,Frequency_radio,curr_ch3,prev_ch3;
 int IC2Value_radioCh5,DutyCycle_radio5,DutyCycle2_radio5,Frequency_radio5;
+int IC2Value_radioCh1,DutyCycle_radio1,DutyCycle2_radio1,Frequency_radio1;
+int IC2Value_radioCh2,DutyCycle_radio2,DutyCycle2_radio2,Frequency_radio2;
+int IC2Value_radioCh4,DutyCycle_radio4,DutyCycle2_radio4,Frequency_radio4;
+
 int IC2Value_radioCh9,DutyCycle_radio9,DutyCycle2_radio9,Frequency_radio9;
 float sensorheight=0;
 
@@ -416,6 +420,9 @@ PWMinput_sound();
 PWMinput_radioCH3();
 
 PWMinput_radioCH6();
+PWMinput_radioCH1();
+PWMinput_radioCH2();
+PWMinput_radioCH4();
 InitializeTimer2();
 
 
@@ -520,6 +527,9 @@ if(serialflag==1){
 
 //RxGyroR
 //	M1Radio_in,M2Radio_in,M3Radio_in,M4Radio_in;
+	serial_output("SetX %c%d.%d,",Csign(setX),C1(setX),C2(setX));
+	serial_output("SetY %c%d.%d,",Csign(setY),C1(setY),C2(setY));
+
   //  serial_output("%c%d.%d,",Csign(RxAccR),C1(RxAccR),C2(RxAccR));
   //  serial_output("%c%d.%d,",Csign(RyAccR),C1(RyAccR),C2(RyAccR));
   //  serial_output("%c%d.%d,",Csign(RzAccR),C1(RzAccR),C2(RzAccR));
@@ -646,7 +656,7 @@ if(serialflag==1){
    // serial_output("%5d,",AccZvalue);
    // serial_output("#Est %f<",RzEst);
 
- //   serial_output("Timer=%5d ",timercount);
+    serial_output("Radio1=%5d\t ",DutyCycle2_radio1);
     serial_output("\n");
     serialflag=0;
 }
@@ -1200,16 +1210,9 @@ if((sensorheight<40.00) & (takeoff==0)){
 void TIM3_IRQHandler(void)
 {
 
+
 	RCC_ClocksTypeDef RCC_Clocks;
 	RCC_GetClocksFreq(&RCC_Clocks);
-	 //togglebit^=1;
-	//	  if(togglebit) GPIOD->BSRRL = 0xF000; // set PD1
-		  	 // wait a short period of time
-	//	  else GPIOD->BSRRH = 0xF000; // reset PD1
-
-	//	TIM_ICInitTypeDef  TIM_ICInitStructure;
-
-
 /* Clear TIM4 Capture compare interrupt pending bit */
 TIM_ClearITPendingBit(TIM3, TIM_IT_CC2);
 
@@ -1218,13 +1221,8 @@ IC2Value_radio = TIM_GetCapture2(TIM3);
 
 if (IC2Value_radio != 0)
 {
-  /* Duty cycle computation */
-  //DutyCycle = (TIM_GetCapture1(TIM4) * 100) / IC2Value;
   DutyCycle_radio=IC2Value_radio;
   DutyCycle2_radio=TIM_GetCapture1(TIM3);
-  /* Frequency computation
-     TIM4 counter clock = (RCC_Clocks.HCLK_Frequency)/2 */
-
   Frequency_radio = (RCC_Clocks.HCLK_Frequency)/2 / IC2Value_radio;
 }
 else
@@ -1240,6 +1238,115 @@ else
 }
 
 
+TIM8_CC_IRQHandler(void){
+
+int 	IC2Value_radio1;
+
+	RCC_ClocksTypeDef RCC_Clocks;
+	RCC_GetClocksFreq(&RCC_Clocks);
+/* Clear TIM4 Capture compare interrupt pending bit */
+TIM_ClearITPendingBit(TIM8, TIM_IT_CC2);
+
+/* Get the Input Capture value */
+IC2Value_radioCh1= TIM_GetCapture2(TIM8);
+//int IC2Value_radioCh1,DutyCycle_radio1,DutyCycle2_radio1,Frequency_radio1;
+if (IC2Value_radioCh1 != 0)
+{
+	DutyCycle_radio1=IC2Value_radioCh1;
+	DutyCycle2_radio1=TIM_GetCapture1(TIM8);
+	Frequency_radio1 = (RCC_Clocks.HCLK_Frequency)/2 / IC2Value_radioCh1;
+	if(DutyCycle2_radio1>24400){
+		setY=(DutyCycle2_radio1-24400)/228;
+
+	}
+	else
+		{
+		setY=(-1)*(24400-DutyCycle2_radio1)/228;
+		}
+
+
+
+
+}
+else
+{
+	DutyCycle_radio1 = 0;
+	Frequency_radio1 = 0;
+	DutyCycle2_radio1=0;
+}
+//serial_output("PWMwidth=%5d\t",DutyCycle2_radio);
+
+
+
+}
+
+
+TIM8_BRK_TIM12_IRQHandler(void){
+
+
+	int 	IC2Value_radio2;
+
+		RCC_ClocksTypeDef RCC_Clocks;
+		RCC_GetClocksFreq(&RCC_Clocks);
+	/* Clear TIM4 Capture compare interrupt pending bit */
+	TIM_ClearITPendingBit(TIM12, TIM_IT_CC2);
+
+	/* Get the Input Capture value */
+	IC2Value_radioCh2= TIM_GetCapture2(TIM12);
+	//int IC2Value_radioCh1,DutyCycle_radio1,DutyCycle2_radio1,Frequency_radio1;
+	if (IC2Value_radioCh2 != 0)
+	{
+		DutyCycle_radio2=IC2Value_radioCh2;
+		DutyCycle2_radio2=TIM_GetCapture1(TIM12);
+		Frequency_radio2 = (RCC_Clocks.HCLK_Frequency)/2 / IC2Value_radioCh2;
+
+		if(DutyCycle2_radio2>24400){
+				setX=(-1)*(DutyCycle2_radio2-24400)/228;
+
+			}
+			else
+				{
+				setX=(24400-DutyCycle2_radio2)/228;
+				}
+
+
+
+	}
+	else
+	{
+		DutyCycle_radio2 = 0;
+		Frequency_radio2 = 0;
+		DutyCycle2_radio2=0;
+	}
+}
+
+
+TIM1_BRK_TIM9_IRQHandler(void){
+
+
+	int 	IC2Value_radio2;
+
+		RCC_ClocksTypeDef RCC_Clocks;
+		RCC_GetClocksFreq(&RCC_Clocks);
+	/* Clear TIM4 Capture compare interrupt pending bit */
+	TIM_ClearITPendingBit(TIM9, TIM_IT_CC2);
+
+	/* Get the Input Capture value */
+	IC2Value_radioCh4= TIM_GetCapture2(TIM9);
+	//int IC2Value_radioCh1,DutyCycle_radio1,DutyCycle2_radio1,Frequency_radio1;
+	if (IC2Value_radioCh4 != 0)
+	{
+		DutyCycle_radio4=IC2Value_radioCh4;
+		DutyCycle2_radio4=TIM_GetCapture1(TIM9);
+		Frequency_radio4 = (RCC_Clocks.HCLK_Frequency)/2 / IC2Value_radioCh4;
+	}
+	else
+	{
+		DutyCycle_radio4 = 0;
+		Frequency_radio4 = 0;
+		DutyCycle2_radio4=0;
+	}
+}
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 void TIM5_IRQHandler(void)
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
