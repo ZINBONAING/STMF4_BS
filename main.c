@@ -55,7 +55,11 @@ int manualradio=14000;
 #define Logbuf 500 //
 int PIDoption=1;  // 0= Gyro , 1 =Angle
 <<<<<<< HEAD
+<<<<<<< HEAD
 float PGain=10,PgainX=10,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight=75,ErrorH=0,GH=100;
+=======
+float PGain=2,PgainX=10,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight,ErrorH=0,GH=0.0005;
+>>>>>>> parent of a6c1661... 3DM_T10-AngleGainXFixed_XY
 =======
 float PGain=2,PgainX=10,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight,ErrorH=0,GH=0.0005;
 >>>>>>> parent of a6c1661... 3DM_T10-AngleGainXFixed_XY
@@ -618,7 +622,11 @@ if(serialflag==1){
  //   serial_output("ErrX=\t%c%d.%d\t",Csign(ErrorX),C1(ErrorX),C2(ErrorX));
 
 <<<<<<< HEAD
+<<<<<<< HEAD
    // serial_output("Yangle= \t%c%d.%d\t",Csign(Ayr),C1(Ayr),C2(Ayr));
+=======
+  //  serial_output("Yangle= \t%c%d.%d\t",Csign(Ayr),C1(Ayr),C2(Ayr));
+>>>>>>> parent of a6c1661... 3DM_T10-AngleGainXFixed_XY
 =======
   //  serial_output("Yangle= \t%c%d.%d\t",Csign(Ayr),C1(Ayr),C2(Ayr));
 >>>>>>> parent of a6c1661... 3DM_T10-AngleGainXFixed_XY
@@ -1195,7 +1203,11 @@ void TIM2_IRQHandler()
 
         if(timercount%10000==0){
 <<<<<<< HEAD
+<<<<<<< HEAD
        //     	setY=-25;
+=======
+            	setX=-25;
+>>>>>>> parent of a6c1661... 3DM_T10-AngleGainXFixed_XY
 =======
             	setX=-25;
 >>>>>>> parent of a6c1661... 3DM_T10-AngleGainXFixed_XY
@@ -1208,7 +1220,11 @@ void TIM2_IRQHandler()
 
                if(timercount%20000==0){
 <<<<<<< HEAD
+<<<<<<< HEAD
                          		//setY=0;
+=======
+                         		setX=0;
+>>>>>>> parent of a6c1661... 3DM_T10-AngleGainXFixed_XY
 =======
                          		setX=0;
 >>>>>>> parent of a6c1661... 3DM_T10-AngleGainXFixed_XY
