@@ -35,6 +35,7 @@ int movavgcounter=0;
 int XErrbuf;
 int expect_received=0,received_msg=0;
 int16_t receivedmsg[25];
+int takeoff=0;
 // P=0.8 , I=0.1 , D=0.225
 // P=3, I=1, D=0.3
 //P=0.17 D=0.16 when upper limit set to 600
@@ -60,7 +61,7 @@ float IGain=0,Dgain=14,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,Pre
 float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5;
 float PreviousErrRateY,ErrRateY,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY;
 float PIDRateY;
-float PreviousAlt_M1=13500,PreviousAlt_M2=13500,PreviousAlt_M3=13500,PreviousAlt_M4=13500;
+float PreviousAlt_M1=13000,PreviousAlt_M2=13000,PreviousAlt_M3=13000,PreviousAlt_M4=13000;
 
 
 
@@ -92,8 +93,8 @@ int IC2Value_radioCh9,DutyCycle_radio9,DutyCycle2_radio9,Frequency_radio9;
 float sensorheight=0;
 
 
-float PGainH=0.5,IGainH=0,DgainH=4,CRateGain=5;
-float setclimbrate=30,actualclimbrate=0,PreviousHeight=0,ErrorClimbrate=0,PidClimbRate=0;
+float PGainH=0.5,IGainH=0,DgainH=4,CRateGain=30;
+float setclimbrate=20,actualclimbrate=0,PreviousHeight=0,ErrorClimbrate=0,PidClimbRate=0;
 
 
 
@@ -538,8 +539,8 @@ if(serialflag==1){
  //  serial_output("GyroX:\t%c%d.%d\t",Csign(RxGyroR),C1(RxGyroR),C2(RxGyroR));
  //  serial_output("GyroXRAW:\t%c%d.%d\t",Csign(GyroXvalue),C1(GyroXvalue),C2(GyroXvalue));
  //  serial_output("ErrRateX :\t%c%d.%d\t",Csign(ErrRateX),C1(ErrRateX),C2(ErrRateX));
-//   serial_output("XAngle PID:\t%c%d.%d\t",Csign(pidx),C1(pidx),C2(pidx));
- //  serial_output("YAngle PID:\t%c%d.%d\t",Csign(pidy),C1(pidy),C2(pidy));
+   serial_output("XAngle PID:\t%c%d.%d\t",Csign(pidx),C1(pidx),C2(pidx));
+   serial_output("YAngle PID:\t%c%d.%d\t",Csign(pidy),C1(pidy),C2(pidy));
    //serial_output("XRatePID :\t%c%d.%d\t",Csign(PIDRateX),C1(PIDRateX),C2(PIDRateX));
 
 
@@ -1094,14 +1095,26 @@ void TIM2_IRQHandler()
         	serialflag=1;
         }
 
-        if(timercount%100==0){
+        if(timercount%400==0){
         	 if(flightmode==1){
 
+if((sensorheight>40.00) ){
 
+	PreviousAlt_M1=PreviousAlt_M2=PreviousAlt_M3=PreviousAlt_M4=12700;
+	takeoff=1;
+
+}
+
+if((sensorheight<40.00) & (takeoff==0)){
+
+	PreviousAlt_M1=PreviousAlt_M2=PreviousAlt_M3=PreviousAlt_M4=13000;
+
+
+}
 
 
         							                     						ErrorH=setheight-sensorheight;
-        							                     						err_diffH=(ErrorH-PreviousErrH)/0.1;
+        							                     						err_diffH=(ErrorH-PreviousErrH)/0.4;
         							                     						int_errH=int_errH + ErrorH;
         							                     						p_termh=PGainH*ErrorH;  //2.4
         							                     						i_termh=IGainH*int_errH;
@@ -1110,14 +1123,14 @@ void TIM2_IRQHandler()
         							                     						PreviousErrH=ErrorH;
 
         							                     						//	 float setclimbrate=0.5,actualclimbrate=0;
-        							                     						actualclimbrate=(sensorheight-PreviousHeight)/0.1;
-        							                     						ErrorClimbrate=setclimbrate-actualclimbrate;
+        							                     						actualclimbrate=(sensorheight-PreviousHeight)/0.4;
+        							                     						ErrorClimbrate=(ErrorH/2)-actualclimbrate;
         							                     						PidClimbRate=ErrorClimbrate* CRateGain;
         							                     						PreviousHeight=sensorheight;
-        							                     						M1Radio_in=PreviousAlt_M1+pidh+PidClimbRate;
-        							                     						M2Radio_in=PreviousAlt_M2+pidh+PidClimbRate;
-        							                     						M3Radio_in=PreviousAlt_M3+pidh+PidClimbRate;
-        							                     						M4Radio_in=PreviousAlt_M4+pidh+PidClimbRate;
+        							                     						M1Radio_in=PreviousAlt_M1+PidClimbRate;
+        							                     						M2Radio_in=PreviousAlt_M2+PidClimbRate;
+        							                     						M3Radio_in=PreviousAlt_M3+PidClimbRate;
+        							                     						M4Radio_in=PreviousAlt_M4+PidClimbRate;
 
 
 
