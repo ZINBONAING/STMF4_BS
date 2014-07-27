@@ -426,7 +426,7 @@ Delay(50000);
 	Delay(50000);
 init_USART3(9600);
 init_USART2(38400);
-//init_USART1();
+init_USART4();
 init_GPIO();
 uint8_t received_data2=0xF0;
 int sf;

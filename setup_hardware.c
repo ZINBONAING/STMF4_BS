@@ -96,7 +96,7 @@ void init_USART3(uint32_t baudrate){
 }
 
 //-------------------- GPS---------------------
-void init_USART1(uint32_t baudrate){
+void init_USART4(uint32_t baudrate){
 
 	/* This is a concept that has to do with the libraries provided by ST
 	 * to make development easier the have made up something similar to
@@ -116,25 +116,25 @@ void init_USART1(uint32_t baudrate){
 	 */
 	/* --------------------------- System Clocks Configuration -----------------*/
 	  /* USART3 clock enable */
-	  RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+	  RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART4, ENABLE);
 
 	  /* GPIOB clock enable */
-	  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+	  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 
 	/* This sequence sets up the TX and RX pins
 	GPIO_InitTypeDef GPIO_InitStructure;
 
   /*-------------------------- GPIO Configuration ----------------------------*/
-  GPIO_InitStruct.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
+  GPIO_InitStruct.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_11;
   GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF;
   GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_Init(GPIOB, &GPIO_InitStruct);
+  GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /* Connect USART pins to AF */
-  GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_USART1);
-  GPIO_PinAFConfig(GPIOB, GPIO_PinSource7, GPIO_AF_USART1);
+  GPIO_PinAFConfig(GPIOC, GPIO_PinSource10, GPIO_AF_UART4);
+  GPIO_PinAFConfig(GPIOC, GPIO_PinSource11, GPIO_AF_UART4);
 
 	/* Now the USART_InitStruct is used to define the
 	 * properties of USART1
@@ -147,15 +147,15 @@ void init_USART1(uint32_t baudrate){
 
     USART_InitStruct.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
 
-    USART_Init(USART1, &USART_InitStruct);
-    USART_ITConfig(USART1, USART_IT_RXNE, ENABLE); // enable the USART1 receive interrupt
+    USART_Init(UART4, &USART_InitStruct);
+    USART_ITConfig(UART4, USART_IT_RXNE, ENABLE); // enable the USART1 receive interrupt
 
-        	NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;		 // we want to configure the USART1 interrupts
+        	NVIC_InitStructure.NVIC_IRQChannel = UART4_IRQn;		 // we want to configure the USART1 interrupts
         	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 6;// this sets the priority group of the USART1 interrupts
         	NVIC_InitStructure.NVIC_IRQChannelSubPriority =0;		 // this sets the subpriority inside the group
         	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			 // the USART1 interrupts are globally enabled
         	NVIC_Init(&NVIC_InitStructure);							 // the properties are passed to the NVIC_Init function which takes care of the low level stuff
-    USART_Cmd(USART1, ENABLE);
+    USART_Cmd(UART4, ENABLE);
 
 
 
@@ -301,7 +301,7 @@ void UART2_sendbyte(uint8_t cmdbyte){
 }
 
 // this is the interrupt request handler (IRQ) for ALL USART1 interrupts
-void USART3_IRQHandler(void){
+void USART3_IRQHand(void){
 
 	// check if the USART1 receive interrupt flag was set
 	if( USART_GetITStatus(USART3, USART_IT_RXNE) ){
@@ -386,7 +386,7 @@ void USART3_IRQHandler(void){
 
 	}
 
-void USART1_IRQHandler(void){
+void UART4_IRQHandler(void){
 
 /*
  *
@@ -416,12 +416,12 @@ eg2. $GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*68
 
 
 	// check if the USART4 receive interrupt flag was set
-	if( USART_GetITStatus(USART1, USART_IT_RXNE) ){
+	if( USART_GetITStatus(UART4, USART_IT_RXNE) ){
 
 
 
 		static uint8_t cnt = 0; // this counter is used to determine the string length
-		char t = USART1->DR; // the character from the USART1 data register is saved int
+		char t = UART4->DR; // the character from the USART1 data register is saved int
 
 	    if(t=='$') GPS_ns=1;
 //#$GPRMA
