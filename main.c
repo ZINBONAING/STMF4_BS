@@ -13,6 +13,7 @@
 #include <math.h>
 #include "stm32f4xx_tim.h"
 #include <stm32f4xx_it.h>
+
 // Update Result here ---
 
 //----ok now is to test out moving average and higher sampling---
@@ -53,13 +54,13 @@ int16_t receivedmsg[25];
 int manualradio=14000;
 #define Logbuf 500 //
 int PIDoption=1;  // 0= Gyro , 1 =Angle
-float PGain=10,PgainX=10,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight=100,ErrorH=0,GH=100;
+float PGain=10,PgainX=10,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight=75,ErrorH=0,GH=100;
 float IGain=0,Dgain=14,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
 float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5;
 float PreviousErrRateY,ErrRateY,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY;
 float PIDRateY;
-float PreviousAlt_M1=13000,PreviousAlt_M2=13000,PreviousAlt_M3=13000,PreviousAlt_M4=13000;
+float PreviousAlt_M1=13500,PreviousAlt_M2=13500,PreviousAlt_M3=13500,PreviousAlt_M4=13500;
 
 
 
@@ -91,8 +92,8 @@ int IC2Value_radioCh9,DutyCycle_radio9,DutyCycle2_radio9,Frequency_radio9;
 float sensorheight=0;
 
 
-float PGainH=10,IGainH=0,DgainH=4,CRateGain=100;
-float setclimbrate=25,actualclimbrate=0,PreviousHeight=0,ErrorClimbrate=0,PidClimbRate=0;
+float PGainH=0.5,IGainH=0,DgainH=4,CRateGain=5;
+float setclimbrate=30,actualclimbrate=0,PreviousHeight=0,ErrorClimbrate=0,PidClimbRate=0;
 
 
 
@@ -523,22 +524,22 @@ if(serialflag==1){
   //  serial_output("%c%d.%d,",Csign(RzAccR),C1(RzAccR),C2(RzAccR));
 	serial_output("Roll:\t%c%d.%d\t",Csign(DM_roll),C1(DM_roll),C2(DM_roll));
 	 serial_output("Pitch:\t%c%d.%d\t",Csign(DM_pitch),C1(DM_pitch),C2(DM_pitch));
-	 serial_output("raw:\t%c%d.%d\t",Csign(DM_raw),C1(DM_raw),C2(DM_raw));
+//	 serial_output("raw:\t%c%d.%d\t",Csign(DM_raw),C1(DM_raw),C2(DM_raw));
   // serial_output("%c%d.%d\t",Csign(M1Radio_in),C1(M1Radio_in),C2(M1Radio_in));
   // serial_output("%c%d.%d\t",Csign(M2Radio_in),C1(M2Radio_in),C2(M2Radio_in));
   // serial_output("%c%d.%d\t",Csign(M3Radio_in),C1(M3Radio_in),C2(M3Radio_in));
   // serial_output("%c%d.%d\t",Csign(M4Radio_in),C1(M4Radio_in),C2(M4Radio_in));
 
 	   serial_output("%c%d.%d\t",Csign(M1),C1(M1),C2(M1));
-	   serial_output("%c%d.%d\t",Csign(M2),C1(M2),C2(M2));
-	   serial_output("%c%d.%d\t",Csign(M3),C1(M3),C2(M3));
-	   serial_output("%c%d.%d\t",Csign(M4),C1(M4),C2(M4));
+	  // serial_output("%c%d.%d\t",Csign(M2),C1(M2),C2(M2));
+	 //  serial_output("%c%d.%d\t",Csign(M3),C1(M3),C2(M3));
+	  // serial_output("%c%d.%d\t",Csign(M4),C1(M4),C2(M4));
 
  //  serial_output("GyroX:\t%c%d.%d\t",Csign(RxGyroR),C1(RxGyroR),C2(RxGyroR));
  //  serial_output("GyroXRAW:\t%c%d.%d\t",Csign(GyroXvalue),C1(GyroXvalue),C2(GyroXvalue));
  //  serial_output("ErrRateX :\t%c%d.%d\t",Csign(ErrRateX),C1(ErrRateX),C2(ErrRateX));
-   serial_output("XAngle PID:\t%c%d.%d\t",Csign(pidx),C1(pidx),C2(pidx));
-   serial_output("YAngle PID:\t%c%d.%d\t",Csign(pidy),C1(pidy),C2(pidy));
+//   serial_output("XAngle PID:\t%c%d.%d\t",Csign(pidx),C1(pidx),C2(pidx));
+ //  serial_output("YAngle PID:\t%c%d.%d\t",Csign(pidy),C1(pidy),C2(pidy));
    //serial_output("XRatePID :\t%c%d.%d\t",Csign(PIDRateX),C1(PIDRateX),C2(PIDRateX));
 
 
@@ -579,13 +580,13 @@ if(serialflag==1){
   //  serial_output("%d,",M3);
   //  serial_output("%d,",M4);
  //   serial_output("%d,",sensorheight);
-   serial_output("Height\t%c%d.%d cm,",Csign(sensorheight),C1(sensorheight),C2(sensorheight));
-   serial_output("actualclimbrate\t %c%d.%d cm,",Csign(actualclimbrate),C1(actualclimbrate),C2(actualclimbrate));
-   serial_output(" ErrorClimbrate\t %c%d.%d cm,",Csign( ErrorClimbrate),C1( ErrorClimbrate),C2( ErrorClimbrate));
+   serial_output("Height\t%c%d.%d cm\t",Csign(sensorheight),C1(sensorheight),C2(sensorheight));
+   serial_output("AC\t %c%d.%d\t cm,",Csign(actualclimbrate),C1(actualclimbrate),C2(actualclimbrate));
+   serial_output(" EAC\t %c%d.%d\t cm,",Csign( ErrorClimbrate),C1( ErrorClimbrate),C2( ErrorClimbrate));
 
 
    // serial_output("motor=%d,",StartMotor);
-    serial_output("FlightMode=%d,",flightmode);
+ //   serial_output("FlightMode=%d\t",flightmode);
    //serial_output("%c%d.%d,",Csign(ErrorH),C1(ErrorH),C2(ErrorH));
   // temperrX=ErrorX*100;
    // temperrY=ErrorY*100;
@@ -603,14 +604,14 @@ if(serialflag==1){
  //   ErrorH=setheight
 
   //  serial_output("ErrorH:%c%d.%d\t",Csign(ErrorH),C1(ErrorH),C2(ErrorH));
-    serial_output("setheight:\t%c%d.%d cm \t",Csign(setheight),C1(setheight),C2(setheight));
+   // serial_output("setheight:\t%c%d.%d cm \t",Csign(setheight),C1(setheight),C2(setheight));
 
 
   //  serial_output("Xangle= \t%c%d.%d\t",Csign(Axr),C1(Axr),C2(Axr));
   //  serial_output("AccAngleX= \t%c%d.%d\t",Csign(AccAngleX),C1(AccAngleX),C2(AccAngleX));
   //  serial_output("GyroAngleX= \t%c%d.%d\t",Csign(Axz*180/PI),C1(Axz*180/PI),C2(Axz*180/PI));
 
-    serial_output("ErrX=\t%c%d.%d\t",Csign(ErrorX),C1(ErrorX),C2(ErrorX));
+ //   serial_output("ErrX=\t%c%d.%d\t",Csign(ErrorX),C1(ErrorX),C2(ErrorX));
 
    // serial_output("Yangle= \t%c%d.%d\t",Csign(Ayr),C1(Ayr),C2(Ayr));
   //  serial_output("ErrY=\t%c%d.%d\t",Csign(ErrorY),C1(ErrorY),C2(ErrorY));
@@ -1044,28 +1045,8 @@ if(CRCvalidation==0){
 
 
             //---End only  execute if StartMotor Flag =1;
-	            if(XErrbuf<Logbuf)
-					{
-						XErrbuffer[XErrbuf]=ErrorX;
-						M1x[XErrbuf]=M1;
-						M2x[XErrbuf]=M2;
-						M3x[XErrbuf]=M3;
-						M4x[XErrbuf]=M4;
-
-						 Ptermx[XErrbuf]=p_termx;
-						Dtermx[XErrbuf]=d_termx;
-										 Itermx[XErrbuf]=i_termx;
-										 PIDx[XErrbuf]=PIDRateX;
-										 Radioinx[XErrbuf]=radioin;
-										 CurrentX[XErrbuf]=Axr;
-					XErrbuf=XErrbuf+1;
-					}
-
-	            else
-	            {
 
 
-	            }
 
 
 }
@@ -1078,6 +1059,22 @@ if(CRCvalidation==0){
             		            	TIM_SetCompare2(TIM1, 8000);
             		            	TIM_SetCompare3(TIM1, 8000);
             		            	TIM_SetCompare4(TIM1, 8000);
+
+            }
+
+
+
+            if(sensorheight>110.0){
+
+            	TIM_SetCompare1(TIM1, 8000);
+            	            		            	TIM_SetCompare2(TIM1, 8000);
+            	            		            	TIM_SetCompare3(TIM1, 8000);
+            	            		            	TIM_SetCompare4(TIM1, 8000);
+M1=8000;
+M2=8000;
+M3=8000;
+M4=8000;
+            	            		            	StartMotor=0;
 
             }
 }
@@ -1097,14 +1094,14 @@ void TIM2_IRQHandler()
         	serialflag=1;
         }
 
-        if(timercount%200==0){
+        if(timercount%100==0){
         	 if(flightmode==1){
 
 
 
 
         							                     						ErrorH=setheight-sensorheight;
-        							                     						err_diffH=(ErrorH-PreviousErrH)/0.07;
+        							                     						err_diffH=(ErrorH-PreviousErrH)/0.1;
         							                     						int_errH=int_errH + ErrorH;
         							                     						p_termh=PGainH*ErrorH;  //2.4
         							                     						i_termh=IGainH*int_errH;
@@ -1113,14 +1110,14 @@ void TIM2_IRQHandler()
         							                     						PreviousErrH=ErrorH;
 
         							                     						//	 float setclimbrate=0.5,actualclimbrate=0;
-        							                     						actualclimbrate=(PreviousHeight-sensorheight)/0.2;
+        							                     						actualclimbrate=(sensorheight-PreviousHeight)/0.1;
         							                     						ErrorClimbrate=setclimbrate-actualclimbrate;
         							                     						PidClimbRate=ErrorClimbrate* CRateGain;
         							                     						PreviousHeight=sensorheight;
-        							                     												M1Radio_in=PreviousAlt_M1+pidh+PidClimbRate;
-        							                     												M2Radio_in=PreviousAlt_M2+pidh+PidClimbRate;
-        							                     												M3Radio_in=PreviousAlt_M3+pidh+PidClimbRate;
-        							                     												M4Radio_in=PreviousAlt_M4+pidh+PidClimbRate;
+        							                     						M1Radio_in=PreviousAlt_M1+pidh+PidClimbRate;
+        							                     						M2Radio_in=PreviousAlt_M2+pidh+PidClimbRate;
+        							                     						M3Radio_in=PreviousAlt_M3+pidh+PidClimbRate;
+        							                     						M4Radio_in=PreviousAlt_M4+pidh+PidClimbRate;
 
 
 
@@ -1348,11 +1345,27 @@ else
 
  *
  *
- *
+ *if(XErrbuf<Logbuf)
+					{
+						XErrbuffer[XErrbuf]=ErrorX;
+						M1x[XErrbuf]=M1;
+						M2x[XErrbuf]=M2;
+						M3x[XErrbuf]=M3;
+						M4x[XErrbuf]=M4;
+
+						 Ptermx[XErrbuf]=p_termx;
+						Dtermx[XErrbuf]=d_termx;
+										 Itermx[XErrbuf]=i_termx;
+										 PIDx[XErrbuf]=PIDRateX;
+										 Radioinx[XErrbuf]=radioin;
+										 CurrentX[XErrbuf]=Axr;
+					XErrbuf=XErrbuf+1;
+					}
  *
  *
  *
  * */
+
 
 /*
  *

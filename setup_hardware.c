@@ -28,6 +28,14 @@ int xcounter=0;
 int latdeg,londeg;
 	    		      double latmin,lonmin;
 	    		      double lat,lon;
+	    		      double lat2=1.343895,lon2=103.7063479,currentheading,desiredheading;
+
+
+	    		      int R = 6371; // km
+
+
+
+
 void init_USART3(uint32_t baudrate){
 
 	/* This is a concept that has to do with the libraries provided by ST
@@ -486,6 +494,20 @@ double xx;
 
 	    		   }
 	    		   xcounter=0;
+
+	    		     float Phi1 = lat*PI/180.00;
+
+
+	    			    		      float Phi2 = lat2*PI/180.00;
+	    			    		      float DelPhi = (lat2-lat)*PI/180.0;
+	    			    		      float DelGamma = (lon2-lon)*PI/180.0;
+
+	    			    		      float a =sin(DelPhi/2) *sin(DelPhi/2) +cos(Phi1) *cos(Phi2) * sin(DelGamma/2) *sin(DelGamma/2);
+	    			    		      float c = 2 * atan2(sqrt(a), sqrt(1-a));
+
+	    			    		      float d = R * c;
+
+
 	    		   return(0);
 
 
