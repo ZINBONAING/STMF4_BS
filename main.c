@@ -53,12 +53,16 @@ int16_t receivedmsg[25];
 int manualradio=14000;
 #define Logbuf 500 //
 int PIDoption=1;  // 0= Gyro , 1 =Angle
-float PGain=10,PgainX=10,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight,ErrorH=0,GH=0.0005;
+float PGain=10,PgainX=10,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight=100,ErrorH=0,GH=100;
 float IGain=0,Dgain=14,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
 float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5;
 float PreviousErrRateY,ErrRateY,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY;
 float PIDRateY;
+float PreviousAlt_M1=13000,PreviousAlt_M2=13000,PreviousAlt_M3=13000,PreviousAlt_M4=13000;
+
+
+
 
 
 float RateXPG=0.8,RateXDG=0,RateXIG=0.000,SetXRate=5;
@@ -87,7 +91,14 @@ int IC2Value_radioCh9,DutyCycle_radio9,DutyCycle2_radio9,Frequency_radio9;
 float sensorheight=0;
 
 
-float PGainH=0.2,IGainH=0,DgainH=0;
+float PGainH=10,IGainH=0,DgainH=4,CRateGain=100;
+float setclimbrate=25,actualclimbrate=0,PreviousHeight=0,ErrorClimbrate=0,PidClimbRate=0;
+
+
+
+
+
+
 float err_diffH,int_errH,p_termh,i_termh,d_termh,pidh,PreviousErrH;
 int PreviousFlightMode=0,StableMode=0;
 float 	RxAcc,RyAcc,RzAcc,RxGyro,RyGyro,RzGyro;
@@ -415,7 +426,7 @@ Delay(50000);
 	Delay(50000);
 init_USART3(9600);
 init_USART2(38400);
-init_USART1();
+//init_USART1();
 init_GPIO();
 uint8_t received_data2=0xF0;
 int sf;
@@ -513,15 +524,15 @@ if(serialflag==1){
 	serial_output("Roll:\t%c%d.%d\t",Csign(DM_roll),C1(DM_roll),C2(DM_roll));
 	 serial_output("Pitch:\t%c%d.%d\t",Csign(DM_pitch),C1(DM_pitch),C2(DM_pitch));
 	 serial_output("raw:\t%c%d.%d\t",Csign(DM_raw),C1(DM_raw),C2(DM_raw));
-   serial_output("%c%d.%d\t",Csign(M1Radio_in),C1(M1Radio_in),C2(M1Radio_in));
-   serial_output("%c%d.%d\t",Csign(M2Radio_in),C1(M2Radio_in),C2(M2Radio_in));
-   serial_output("%c%d.%d\t",Csign(M3Radio_in),C1(M3Radio_in),C2(M3Radio_in));
-   serial_output("%c%d.%d\t",Csign(M4Radio_in),C1(M4Radio_in),C2(M4Radio_in));
+  // serial_output("%c%d.%d\t",Csign(M1Radio_in),C1(M1Radio_in),C2(M1Radio_in));
+  // serial_output("%c%d.%d\t",Csign(M2Radio_in),C1(M2Radio_in),C2(M2Radio_in));
+  // serial_output("%c%d.%d\t",Csign(M3Radio_in),C1(M3Radio_in),C2(M3Radio_in));
+  // serial_output("%c%d.%d\t",Csign(M4Radio_in),C1(M4Radio_in),C2(M4Radio_in));
 
-	//   serial_output("%c%d.%d\t",Csign(M1),C1(M1),C2(M1));
-	 //  serial_output("%c%d.%d\t",Csign(M2),C1(M2),C2(M2));
-	//   serial_output("%c%d.%d\t",Csign(M3),C1(M3),C2(M3));
-	//   serial_output("%c%d.%d\t",Csign(M4),C1(M4),C2(M4));
+	   serial_output("%c%d.%d\t",Csign(M1),C1(M1),C2(M1));
+	   serial_output("%c%d.%d\t",Csign(M2),C1(M2),C2(M2));
+	   serial_output("%c%d.%d\t",Csign(M3),C1(M3),C2(M3));
+	   serial_output("%c%d.%d\t",Csign(M4),C1(M4),C2(M4));
 
  //  serial_output("GyroX:\t%c%d.%d\t",Csign(RxGyroR),C1(RxGyroR),C2(RxGyroR));
  //  serial_output("GyroXRAW:\t%c%d.%d\t",Csign(GyroXvalue),C1(GyroXvalue),C2(GyroXvalue));
@@ -568,7 +579,11 @@ if(serialflag==1){
   //  serial_output("%d,",M3);
   //  serial_output("%d,",M4);
  //   serial_output("%d,",sensorheight);
-   serial_output("Height %c%d.%d cm,",Csign(sensorheight),C1(sensorheight),C2(sensorheight));
+   serial_output("Height\t%c%d.%d cm,",Csign(sensorheight),C1(sensorheight),C2(sensorheight));
+   serial_output("actualclimbrate\t %c%d.%d cm,",Csign(actualclimbrate),C1(actualclimbrate),C2(actualclimbrate));
+   serial_output(" ErrorClimbrate\t %c%d.%d cm,",Csign( ErrorClimbrate),C1( ErrorClimbrate),C2( ErrorClimbrate));
+
+
    // serial_output("motor=%d,",StartMotor);
     serial_output("FlightMode=%d,",flightmode);
    //serial_output("%c%d.%d,",Csign(ErrorH),C1(ErrorH),C2(ErrorH));
@@ -868,6 +883,7 @@ if(CRCvalidation==0){
 
 //----------------------compenstae unbalance CW and CCW -------------------------
 								float check;
+								/*
 								check=(M1Radio_in+M3Radio_in+M2Radio_in+M4Radio_in)/4.0;
 						                     		  if((check>MXlimit) ||  (check<MNlimit)){
 						                     			 M1Radio_in=radioin;
@@ -878,10 +894,20 @@ if(CRCvalidation==0){
 
 						                     		       }
 						                     		// if((radioin>12000)){
+
+*/
+
+
+						                     		  if(flightmode==0){
+
 						                     								                     			M1Radio_in=radioin;
 						                     								                     			M2Radio_in=radioin;
 						                     								                     			M3Radio_in=radioin;
 						                     								                     			M4Radio_in=radioin;
+
+
+						                     		   }
+
 
 
 						                     								                     		       //}
@@ -920,10 +946,10 @@ if(CRCvalidation==0){
 
 
 
-									 if((flightmode==1)&(PreviousFlightMode!=flightmode)){   //Altitude Hold Mode just entered
-										 setheight=sensorheight;
- 									 }
-									 PreviousFlightMode=flightmode;
+									// if((flightmode==1)&(PreviousFlightMode!=flightmode)){   //Altitude Hold Mode just entered
+									//	 setheight=sensorheight;
+ 									// }
+									// PreviousFlightMode=flightmode;
 
 
 
@@ -973,24 +999,7 @@ if(CRCvalidation==0){
 
 
 
-                                    if(flightmode==1){
 
-										ErrorH=setheight-sensorheight;
-										err_diffH=(ErrorH-PreviousErrH)/0.07;
-										int_errH=int_errH + ErrorH;
-								        p_termh=PGainH*ErrorH;  //2.4
-										i_termh=IGainH*int_errH;
-										d_termh=(DgainH*err_diffH);
-										pidh=p_termh+d_termh+i_termh;
-										PreviousErrH=ErrorH;
-
-										M1=M1+pidh;
-										M2=M2+pidh;
-										M3=M3+pidh;
-										M4=M4+pidh;
-
-
-																 }
 
 
 
@@ -1010,7 +1019,20 @@ if(CRCvalidation==0){
 			if(M2<MNlimit){M2=MNlimit;}
 			if(M3<MNlimit){M3=MNlimit;}
             if(M4<MNlimit){M4=MNlimit;}
-            //---Begin only  execute if StartMotor Flag =1;
+
+/*
+            if(flightmode==1){
+
+            	 PreviousAlt_M1=M1;
+            	 PreviousAlt_M2=M2;
+            	 PreviousAlt_M3=M3;
+            	 PreviousAlt_M4=M4;
+
+
+
+            }
+
+  */          //---Begin only  execute if StartMotor Flag =1;
             if((StartMotor==1)& (Radio_status==1))
             {
 
@@ -1075,6 +1097,38 @@ void TIM2_IRQHandler()
         	serialflag=1;
         }
 
+        if(timercount%200==0){
+        	 if(flightmode==1){
+
+
+
+
+        							                     						ErrorH=setheight-sensorheight;
+        							                     						err_diffH=(ErrorH-PreviousErrH)/0.07;
+        							                     						int_errH=int_errH + ErrorH;
+        							                     						p_termh=PGainH*ErrorH;  //2.4
+        							                     						i_termh=IGainH*int_errH;
+        							                     						d_termh=(DgainH*err_diffH);
+        							                     						pidh=p_termh+d_termh+i_termh;
+        							                     						PreviousErrH=ErrorH;
+
+        							                     						//	 float setclimbrate=0.5,actualclimbrate=0;
+        							                     						actualclimbrate=(PreviousHeight-sensorheight)/0.2;
+        							                     						ErrorClimbrate=setclimbrate-actualclimbrate;
+        							                     						PidClimbRate=ErrorClimbrate* CRateGain;
+        							                     						PreviousHeight=sensorheight;
+        							                     												M1Radio_in=PreviousAlt_M1+pidh+PidClimbRate;
+        							                     												M2Radio_in=PreviousAlt_M2+pidh+PidClimbRate;
+        							                     												M3Radio_in=PreviousAlt_M3+pidh+PidClimbRate;
+        							                     												M4Radio_in=PreviousAlt_M4+pidh+PidClimbRate;
+
+
+
+
+        							                     																		 }
+               }
+
+
         if((timercount%20==0) & (timercount>5000)){
 
         	  UART2_sendbyte(0x31);
@@ -1090,7 +1144,8 @@ void TIM2_IRQHandler()
 
         if(timercount%20==0)
               {
-        	radio_in();
+        radio_in();
+
 
 
               	if(Radio_status==1){
