@@ -36,6 +36,7 @@ int XErrbuf;
 int expect_received=0,received_msg=0;
 int16_t receivedmsg[25];
 int takeoff=0;
+float xtrim=0,ytrim=0.0;
 // P=0.8 , I=0.1 , D=0.225
 // P=3, I=1, D=0.3
 //P=0.17 D=0.16 when upper limit set to 600
@@ -55,8 +56,8 @@ int takeoff=0;
 int manualradio=14000;
 #define Logbuf 500 //
 int PIDoption=1;  // 0= Gyro , 1 =Angle
-float PGain=10,PgainX=10,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight=75,ErrorH=0,GH=100;
-float IGain=0,Dgain=14,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
+float PGain=10.3,PgainX=10.3,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight=300,ErrorH=0,GH=100;
+float IGain=0,Dgain=17.5,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
 float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5;
 float PreviousErrRateY,ErrRateY,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY;
@@ -83,7 +84,7 @@ float temperrX,temperrY;
 int flightmode=0;
 #define I2C_TIMEOUT  (0x5)
 #define PI 3.14159265358979
-float MXlimit=16000;
+float MXlimit=15000;
 #define MNlimit 8100
 #define step 100
 
@@ -97,8 +98,8 @@ int IC2Value_radioCh9,DutyCycle_radio9,DutyCycle2_radio9,Frequency_radio9;
 float sensorheight=0;
 
 
-float PGainH=0.5,IGainH=0,DgainH=4,CRateGain=30;
-float setclimbrate=20,actualclimbrate=0,PreviousHeight=0,ErrorClimbrate=0,PidClimbRate=0;
+float PGainH=0.5,IGainH=0,DgainH=4,CRateGain=25;
+float setclimbrate=15,actualclimbrate=0,PreviousHeight=0,ErrorClimbrate=0,PidClimbRate=0;
 
 
 
@@ -527,8 +528,8 @@ if(serialflag==1){
 
 //RxGyroR
 //	M1Radio_in,M2Radio_in,M3Radio_in,M4Radio_in;
-	serial_output("SetX %c%d.%d,",Csign(setX),C1(setX),C2(setX));
-	serial_output("SetY %c%d.%d,",Csign(setY),C1(setY),C2(setY));
+	serial_output("SetX\t%c%d.%d\t",Csign(setX),C1(setX),C2(setX));
+	serial_output("SetY\t%c%d.%d\t",Csign(setY),C1(setY),C2(setY));
 
   //  serial_output("%c%d.%d,",Csign(RxAccR),C1(RxAccR),C2(RxAccR));
   //  serial_output("%c%d.%d,",Csign(RyAccR),C1(RyAccR),C2(RyAccR));
@@ -879,7 +880,25 @@ if(CRCvalidation==0){
 
 		   ErrorX=setX-SDM_pitch;//Axr
 		   ErrorY=setY-SDM_roll;
-		 //  ErrorH=setheight-DutyCycle2;
+/*
+
+			if	((abs(ErrorX)>2)&(abs(ErrorX)<5)){					                     		       //}
+								                     		 PgainX=10;
+							                     		 Dgain=14.5;
+			}
+			if (abs(ErrorX)<2)
+
+			{
+				 PgainX=5;
+			    Dgain=1;
+	}
+			if  (abs(ErrorX)>5) {
+							  PgainX=11;
+							  Dgain=18;
+
+						}
+
+*/
 
 
 		   if((Radio_status==1)){
@@ -921,8 +940,6 @@ if(CRCvalidation==0){
 						                     		   }
 
 
-
-						                     								                     		       //}
 
 
 
@@ -1075,7 +1092,7 @@ if(CRCvalidation==0){
 
 
 
-            if(sensorheight>110.0){
+            if(sensorheight>(setheight+100)){
 
             	TIM_SetCompare1(TIM1, 8000);
             	            		            	TIM_SetCompare2(TIM1, 8000);
@@ -1110,7 +1127,7 @@ void TIM2_IRQHandler()
 
 if((sensorheight>40.00) ){
 
-	PreviousAlt_M1=PreviousAlt_M2=PreviousAlt_M3=PreviousAlt_M4=12700;
+	PreviousAlt_M1=PreviousAlt_M2=PreviousAlt_M3=PreviousAlt_M4=12500;
 	takeoff=1;
 
 }
@@ -1134,7 +1151,7 @@ if((sensorheight<40.00) & (takeoff==0)){
 
         							                     						//	 float setclimbrate=0.5,actualclimbrate=0;
         							                     						actualclimbrate=(sensorheight-PreviousHeight)/0.4;
-        							                     						ErrorClimbrate=(ErrorH/2)-actualclimbrate;
+        							                     						ErrorClimbrate=(ErrorH/8)-actualclimbrate;
         							                     						PidClimbRate=ErrorClimbrate* CRateGain;
         							                     						PreviousHeight=sensorheight;
         							                     						M1Radio_in=PreviousAlt_M1+PidClimbRate;
@@ -1256,12 +1273,12 @@ if (IC2Value_radioCh1 != 0)
 	DutyCycle2_radio1=TIM_GetCapture1(TIM8);
 	Frequency_radio1 = (RCC_Clocks.HCLK_Frequency)/2 / IC2Value_radioCh1;
 	if(DutyCycle2_radio1>24400){
-		setY=(DutyCycle2_radio1-24400)/228;
+		setY=(DutyCycle2_radio1-24400)/456;
 
 	}
 	else
 		{
-		setY=(-1)*(24400-DutyCycle2_radio1)/228;
+		setY=(-1)*(24400-DutyCycle2_radio1)/456;
 		}
 
 
@@ -1301,12 +1318,12 @@ TIM8_BRK_TIM12_IRQHandler(void){
 		Frequency_radio2 = (RCC_Clocks.HCLK_Frequency)/2 / IC2Value_radioCh2;
 
 		if(DutyCycle2_radio2>24400){
-				setX=(-1)*(DutyCycle2_radio2-24400)/228;
+				setX=((-1)*(DutyCycle2_radio2-24400)/456)+xtrim;
 
 			}
 			else
 				{
-				setX=(24400-DutyCycle2_radio2)/228;
+				setX=((24400-DutyCycle2_radio2)/456)+xtrim;
 				}
 
 
