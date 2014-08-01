@@ -85,7 +85,7 @@ int flightmode=0;
 #define I2C_TIMEOUT  (0x5)
 #define PI 3.14159265358979
 float MXlimit=15000;
-#define MNlimit 8100
+float MNlimit=9900;
 #define step 100
 
 int IC2Value_radio, DutyCycle_radio,DutyCycle2_radio,Frequency_radio,curr_ch3,prev_ch3;
@@ -751,8 +751,9 @@ void radio_in(){
 
          //  radioin=manualradio;
 
-	    radioin=((DutyCycle2_radio-20000)/1.358)+8100;
-/*
+	   radioin=((DutyCycle2_radio-20000)/1.358)+8100;
+	 //  radioin=10000.00;
+	    /*
        	m2m4_rpm=(-0.0002996819 *(radioin)*(radioin)) +7.5004877*(radioin) -40913.2314;
                      		m1m3_rpm=(-0.0002740191*(radioin)*(radioin)) + 6.9107775322*(radioin) -37915.38407;
                      		average_rpm=(m1m3_rpm+m2m4_rpm)/2.0;
@@ -1092,12 +1093,12 @@ if(CRCvalidation==0){
 
 
 
-            if(sensorheight>(setheight+100)){
+            if(sensorheight>700){
 
-            	TIM_SetCompare1(TIM1, 8000);
-            	            		            	TIM_SetCompare2(TIM1, 8000);
-            	            		            	TIM_SetCompare3(TIM1, 8000);
-            	            		            	TIM_SetCompare4(TIM1, 8000);
+            	TIM_SetCompare1(TIM1, 12000);
+            	            		            	TIM_SetCompare2(TIM1, 12000);
+            	            		            	TIM_SetCompare3(TIM1, 12000);
+            	            		            	TIM_SetCompare4(TIM1, 12000);
 M1=8000;
 M2=8000;
 M3=8000;
