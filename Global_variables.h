@@ -24,6 +24,8 @@ extern int movavgcounter;
 extern int expect_received;
 extern int received_msg;
 extern int16_t receivedmsg[25];
+extern int ConvertedValue;
+extern float Batter_V;
 //good performance
 //P=0.09, D=0.008
 // P=0.07, D=0.006

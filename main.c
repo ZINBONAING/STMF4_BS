@@ -20,7 +20,7 @@
 
 // End update resilt here.---
 
-
+float Batter_V=0.0;
 
 #define SERIAL_BUFFER_SIZE 512
 char serial_buffer[SERIAL_BUFFER_SIZE] ;
@@ -115,7 +115,7 @@ int Rstate=0;
 int ns_radio=0;
 float radioin=0;
 int tempradio_status=0;
-
+int ConvertedValue = 0; //Converted value readed from ADC
 float XErrbuffer[Logbuf];
 float M1x[Logbuf];
 float M2x[Logbuf];
@@ -409,6 +409,18 @@ int ki;
 int sensor_value=0;
 
 float heading,lat1=1.344026,lon1,lat2,lon2,headb;
+adc_configure();//Start configuration
+
+    ConvertedValue = adc_convert();//Read the ADC converted value
+ //   delay(100);
+    Batter_V=(((ConvertedValue/4096.0)*2.96)-0.20)*10.0;
+    if(Batter_V<10.0){
+
+    	while(1);
+    }
+
+
+
 
 
 I2C1_init(); // initialize I2C peripheral
