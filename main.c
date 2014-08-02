@@ -19,7 +19,7 @@
 //----ok now is to test out moving average and higher sampling---
 
 // End update resilt here.---
-int firstime=0;
+int firstime=0,rawmanualcontrol=1,initialbearing=0;
 float Batter_V=0.0;
 
 #define SERIAL_BUFFER_SIZE 512
@@ -56,28 +56,24 @@ float xtrim=0,ytrim=0.0;
 int manualradio=14000;
 #define Logbuf 500 //
 int PIDoption=1;  // 0= Gyro , 1 =Angle
-float PGain=10.3,PgainX=10.3,ErrorX=0,ErrorY=0,setX=0,setY=0,setZ,setheight=300,ErrorH=0,GH=100;
-float IGain=0,Dgain=17.5,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
-float PgainZ=10,IgainZ=0,DgainZ=10.3;
+float PGain=15.3,PgainX=15.3,ErrorX=0,ErrorY=0,setX=0,setY=0,setZ,setheight=300,ErrorH=0,GH=100;
+float IGain=0,Dgain=11,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
+float PgainZ=20,IgainZ=0,DgainZ=4;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
-float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5;
-float PreviousErrRateY,ErrRateY,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY;
-float PIDRateY;
+float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5,RateZPG=0.8,RateZDG=0,RateZIG=0;
+float PreviousErrRateY,ErrRateY,ErrRateZ,PtermRateZ,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY,DiffErrRateZ,PreviousErrRateZ=0,IntErrRateZ,ItermRateZ,PIDRateZ;
+float PIDRateY,DtermRateZ,PIDRateZ;
 float PreviousAlt_M1=13000,PreviousAlt_M2=13000,PreviousAlt_M3=13000,PreviousAlt_M4=13000;
 
 /*
- *
-								err_diffZ=(ErrorZ-PreviousErrZ)/0.02;
-								int_errZ=int_errZ + ErrorZ;
-
-//----------------------------------------------------------------
-
-								p_termz=PgainZ*ErrorZ;  //2.4
-								i_termz=IGainZ*int_errZ;
-								d_termz=(DgainZ*err_diffZ);
-								pidz=p_termz+d_termz+i_termz;
-								PreviousErrZ=ErrorZ;
- */
+ErrRateZ=setZ-DM_CompAngRateZ
+							 	PtermRateZ=	ErrRateZ*RateZPG;
+							 	DiffErrRateZ=ErrRateZ-PreviousErrRateZ;
+							 	DtermRateZ=DiffErrRateZ*RateZDG;
+							 	IntErrRateZ=IntErrRateZ+ErrRateZ;
+							 	ItermRateZ=RateZIG*IntErrRateZ;
+							 	PIDRateZ=PtermRateZ+DtermRateZ+ItermRateZ;
+*/
 
 
 
@@ -147,8 +143,11 @@ int PID_Start=0;
 float m1m3_rpm,m2m4_rpm,average_rpm,m1Rcompensate,m2Rcompensate,m3Rcompensate,m4Rcompensate;
 float M1Radio_in,M2Radio_in,M3Radio_in,M4Radio_in;
 
-float DM_roll,DM_pitch,DM_raw,DM_CompAngRateX,GyroGain,DM_CompAngRateY;
+float DM_roll,DM_pitch,DM_raw,DM_CompAngRateX,GyroGain,DM_CompAngRateY,DM_CompAngRateZ;
 int16_t  DM_cmd,DM_roll_cal,DM_pitch_cal,DM_raw_cal,DM_AccelX_cal,DM_AccelY_cal,DM_AccelZ_cal,DM_CompAngRateX_cal,DM_CompAngRateY_cal,DM_CompAngRateZ_cal,DM_TimerTicks_cal,checksum;
+
+
+
 //int16_t  DM_cmd;
 int16_t CRCvalidation=0,Gyro_sensitivity=0;
 //end Radio status state machine
@@ -449,6 +448,7 @@ PWMinput_radioCH6();
 PWMinput_radioCH1();
 PWMinput_radioCH2();
 PWMinput_radioCH4();
+
 InitializeTimer2();
 
 
@@ -528,7 +528,7 @@ expect_received=0;
    //    TIM_SetCompare4(TIM1, 11000); //M4 --   rpm
 
 
-int firsttime=0;
+
 
 while(1){
 
@@ -905,9 +905,18 @@ if(CRCvalidation==0){
 	SDM_roll= DM_roll;
 	SDM_raw=DM_raw;
 
-	if(firstime==0){
+	if((firstime==0)&(timercount>5200)){
+
+
+		if((flightmode==0) & (StableMode==1) & (sensorheight>100)){
 		setZ=SDM_raw;
-		firstime=1;
+        initialbearing=setZ;
+        firstime=1;
+		}
+
+
+
+
 	}
 }
 
@@ -1022,7 +1031,12 @@ if(CRCvalidation==0){
 								 if((ErrorY<1) && (ErrorY>-1)) {int_errY=0;IntErrRateY=0; }
 								 if((ErrorX<1) && (ErrorX>-1)) {int_errX=0; IntErrRateX=0;}
 								 if((ErrorZ<1) && (ErrorZ>-1)) {int_errX=0; IntErrRateX=0;}
-
+                                 if((abs(ErrorX) <3) & (abs(ErrorY) <3)){
+                                	 StableMode=1;
+                                 }
+                                 else {
+                                	 StableMode=0;
+								}
 
 
 									// if((flightmode==1)&(PreviousFlightMode!=flightmode)){   //Altitude Hold Mode just entered
@@ -1056,22 +1070,51 @@ if(CRCvalidation==0){
 						 //    End Rate PID XY
 
 
+								 	  //	 RatePIDZ
+								 	if(flightmode==0){
+								 	ErrRateZ=pidz-DM_CompAngRateZ;
+								 	RateZPG=1.2;
+								 	}
+								 	else{
+								 		ErrRateZ=setZ-DM_CompAngRateZ;
+								 		RateZPG=8;
+								 	}
+								 	PtermRateZ=	ErrRateZ*RateZPG;
+								 	DiffErrRateZ=ErrRateZ-PreviousErrRateZ;
+								 	DtermRateZ=DiffErrRateZ*RateZDG;
+								 	IntErrRateZ=IntErrRateZ+ErrRateZ;
+								 	ItermRateZ=RateZIG*IntErrRateZ;
+								 	PIDRateZ=PtermRateZ+DtermRateZ+ItermRateZ;
+								 							 //    End Rate PID XY
+
+
 
 
 
 									 if(PIDoption==0){
-									   M2= M2Radio_in+PIDRateX+PIDRateY;//;//+PIDRateY
-									   M1= M1Radio_in+PIDRateX-PIDRateY;//;//-PIDRateY
+									   M2= M2Radio_in-PIDRateZ;//;//+PIDRateX+PIDRateY
+									   M1= M1Radio_in+PIDRateZ;//;//+PIDRateX-PIDRateY
                                       //---------------XASIS -----------------------------------
-									   M3= M3Radio_in-PIDRateX+PIDRateY;//;//+PIDRateY
-									   M4= M4Radio_in-PIDRateX-PIDRateY;//;//-PIDRateY
+									   M3= M3Radio_in+PIDRateZ;//;//-PIDRateX+PIDRateY
+									   M4= M4Radio_in-PIDRateZ;//;//-PIDRateX-PIDRateY
 									 }
 									 if(PIDoption==1){
-																		   M2= M2Radio_in+pidx+pidy+pidz;//;//+PIDRateY
-																		   M1= M1Radio_in+pidx-pidy-pidz;//;//-PIDRateY
+																		   M2= M2Radio_in-pidz+pidx+pidy;
+																		   M1= M1Radio_in+pidz+pidx-pidy;
 									                                      //---------------XASIS -----------------------------------
-																		   M3= M3Radio_in-pidx+pidy-pidz;//;//+PIDRateY
-																		   M4= M4Radio_in-pidx-pidy+pidz;//;//-PIDRateY
+																		   M3= M3Radio_in+pidz-pidx+pidy;
+																		   M4= M4Radio_in-pidz-pidx-pidy;
+
+
+																		   if(sensorheight>100){
+																			   M2= M2-pidz;
+																			   M1= M1+pidz;
+																			   M3= M3+pidz;
+																			   M4= M4-pidz;
+
+																		   }
+
+
 																		 }
 
 
@@ -1193,7 +1236,7 @@ if((sensorheight<40.00) & (takeoff==0)){
 
 
 }
-
+if(StableMode){
 
         							                     						ErrorH=setheight-sensorheight;
         							                     						err_diffH=(ErrorH-PreviousErrH)/0.4;
@@ -1215,7 +1258,7 @@ if((sensorheight<40.00) & (takeoff==0)){
         							                     						M4Radio_in=PreviousAlt_M4+PidClimbRate;
 
 
-
+}
 
         							                     																		 }
                }
@@ -1411,6 +1454,18 @@ TIM1_BRK_TIM9_IRQHandler(void){
 		DutyCycle_radio4=IC2Value_radioCh4;
 		DutyCycle2_radio4=TIM_GetCapture1(TIM9);
 		Frequency_radio4 = (RCC_Clocks.HCLK_Frequency)/2 / IC2Value_radioCh4;
+if(rawmanualcontrol==1){
+
+		if(DutyCycle2_radio4>24400){
+		//	setZ=((DutyCycle2_radio4-24400)/76)+initialbearing;
+
+			}
+			else
+				{
+		//	setZ=((-1)*(24400-DutyCycle2_radio4)/76)+initialbearing;
+				}
+}
+
 	}
 	else
 	{
