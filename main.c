@@ -19,7 +19,7 @@
 //----ok now is to test out moving average and higher sampling---
 
 // End update resilt here.---
-
+int firstime=0;
 float Batter_V=0.0;
 
 #define SERIAL_BUFFER_SIZE 512
@@ -56,15 +56,28 @@ float xtrim=0,ytrim=0.0;
 int manualradio=14000;
 #define Logbuf 500 //
 int PIDoption=1;  // 0= Gyro , 1 =Angle
-float PGain=10.3,PgainX=10.3,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight=300,ErrorH=0,GH=100;
+float PGain=10.3,PgainX=10.3,ErrorX=0,ErrorY=0,setX=0,setY=0,setZ,setheight=300,ErrorH=0,GH=100;
 float IGain=0,Dgain=17.5,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
+float PgainZ=10,IgainZ=0,DgainZ=10.3;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
 float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5;
 float PreviousErrRateY,ErrRateY,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY;
 float PIDRateY;
 float PreviousAlt_M1=13000,PreviousAlt_M2=13000,PreviousAlt_M3=13000,PreviousAlt_M4=13000;
 
+/*
+ *
+								err_diffZ=(ErrorZ-PreviousErrZ)/0.02;
+								int_errZ=int_errZ + ErrorZ;
 
+//----------------------------------------------------------------
+
+								p_termz=PgainZ*ErrorZ;  //2.4
+								i_termz=IGainZ*int_errZ;
+								d_termz=(DgainZ*err_diffZ);
+								pidz=p_termz+d_termz+i_termz;
+								PreviousErrZ=ErrorZ;
+ */
 
 
 
@@ -72,7 +85,7 @@ float RateXPG=0.8,RateXDG=0,RateXIG=0.000,SetXRate=5;
 float PreviousErrRateX,ErrRateX,DiffErrRateX,IntErrRateX,PtermRateX,DtermRateX,ItermRateX;
 float PIDRateX,Axz,Ayz,RateAyzpast;
 
-
+float p_termz=0.0,i_termz=0.0,d_termz=0.0,pidz,PreviousErrZ,ErrorZ,err_diffZ,int_errZ;
 float p_termx=0.0,i_termx=0.0,d_termx=0.0,p_termy=0.0,i_termy=0.0,d_termy=0.0;
 float pidx=0.0,pidy=0.0;
 float M1=500,M2=500,M3=500,M4=500;
@@ -411,13 +424,13 @@ int sensor_value=0;
 float heading,lat1=1.344026,lon1,lat2,lon2,headb;
 adc_configure();//Start configuration
 
-    ConvertedValue = adc_convert();//Read the ADC converted value
- //   delay(100);
-    Batter_V=(((ConvertedValue/4096.0)*2.96)-0.20)*10.0;
-    if(Batter_V<10.0){
 
-    	while(1);
-    }
+
+    	 ConvertedValue = adc_convert();//Read the ADC converted value
+    	 //   delay(100);
+    	    Batter_V=(((ConvertedValue/4096.0)*2.96)-0.20)*10.0;
+
+
 
 
 
@@ -515,7 +528,7 @@ expect_received=0;
    //    TIM_SetCompare4(TIM1, 11000); //M4 --   rpm
 
 
-
+int firsttime=0;
 
 while(1){
 
@@ -542,12 +555,13 @@ if(serialflag==1){
 //	M1Radio_in,M2Radio_in,M3Radio_in,M4Radio_in;
 	serial_output("SetX\t%c%d.%d\t",Csign(setX),C1(setX),C2(setX));
 	serial_output("SetY\t%c%d.%d\t",Csign(setY),C1(setY),C2(setY));
-
-  //  serial_output("%c%d.%d,",Csign(RxAccR),C1(RxAccR),C2(RxAccR));
-  //  serial_output("%c%d.%d,",Csign(RyAccR),C1(RyAccR),C2(RyAccR));
+	serial_output("SetZ\t%c%d.%d\t",Csign(setZ),C1(setZ),C2(setZ));
+    serial_output("ErrZ:\t%c%d.%d\t",Csign(ErrorZ),C1(ErrorZ),C2(ErrorZ));
+    serial_output("Voltage \t%c%d.%d,",Csign(Batter_V),C1(Batter_V),C2(Batter_V));
   //  serial_output("%c%d.%d,",Csign(RzAccR),C1(RzAccR),C2(RzAccR));
 	serial_output("Roll:\t%c%d.%d\t",Csign(DM_roll),C1(DM_roll),C2(DM_roll));
 	 serial_output("Pitch:\t%c%d.%d\t",Csign(DM_pitch),C1(DM_pitch),C2(DM_pitch));
+	 serial_output("Raw:\t%c%d.%d\t",Csign(DM_raw),C1(DM_raw),C2(DM_raw));
 //	 serial_output("raw:\t%c%d.%d\t",Csign(DM_raw),C1(DM_raw),C2(DM_raw));
   // serial_output("%c%d.%d\t",Csign(M1Radio_in),C1(M1Radio_in),C2(M1Radio_in));
   // serial_output("%c%d.%d\t",Csign(M2Radio_in),C1(M2Radio_in),C2(M2Radio_in));
@@ -564,6 +578,7 @@ if(serialflag==1){
  //  serial_output("ErrRateX :\t%c%d.%d\t",Csign(ErrRateX),C1(ErrRateX),C2(ErrRateX));
    serial_output("XAngle PID:\t%c%d.%d\t",Csign(pidx),C1(pidx),C2(pidx));
    serial_output("YAngle PID:\t%c%d.%d\t",Csign(pidy),C1(pidy),C2(pidy));
+   serial_output("ZAngle PID:\t%c%d.%d\t",Csign(pidz),C1(pidz),C2(pidz));
    //serial_output("XRatePID :\t%c%d.%d\t",Csign(PIDRateX),C1(PIDRateX),C2(PIDRateX));
 
 
@@ -884,15 +899,22 @@ void ControlLoop(){
 
 
 
-	float SDM_pitch,SDM_roll;
+	float SDM_pitch,SDM_roll,SDM_raw;
 if(CRCvalidation==0){
 	SDM_pitch=DM_pitch;
 	SDM_roll= DM_roll;
+	SDM_raw=DM_raw;
+
+	if(firstime==0){
+		setZ=SDM_raw;
+		firstime=1;
+	}
 }
 
 
 		   ErrorX=setX-SDM_pitch;//Axr
 		   ErrorY=setY-SDM_roll;
+		   ErrorZ=setZ-SDM_raw;
 /*
 
 			if	((abs(ErrorX)>2)&(abs(ErrorX)<5)){					                     		       //}
@@ -980,11 +1002,26 @@ if(CRCvalidation==0){
 								PreviousErrY=ErrorY;
 
 
+//---------------------------------------------------------------
+
+
+								err_diffZ=(ErrorZ-PreviousErrZ)/0.02;
+								int_errZ=int_errZ + ErrorZ;
+
+//----------------------------------------------------------------
+
+								p_termz=PgainZ*ErrorZ;  //2.4
+								i_termz=IgainZ*int_errZ;
+								d_termz=(DgainZ*err_diffZ);
+								pidz=p_termz+d_termz+i_termz;
+								PreviousErrZ=ErrorZ;
+//--------------------------------------------------------------
 
 
 
 								 if((ErrorY<1) && (ErrorY>-1)) {int_errY=0;IntErrRateY=0; }
 								 if((ErrorX<1) && (ErrorX>-1)) {int_errX=0; IntErrRateX=0;}
+								 if((ErrorZ<1) && (ErrorZ>-1)) {int_errX=0; IntErrRateX=0;}
 
 
 
@@ -1030,11 +1067,11 @@ if(CRCvalidation==0){
 									   M4= M4Radio_in-PIDRateX-PIDRateY;//;//-PIDRateY
 									 }
 									 if(PIDoption==1){
-																		   M2= M2Radio_in+pidx+pidy;//;//+PIDRateY
-																		   M1= M1Radio_in+pidx-pidy;//;//-PIDRateY
+																		   M2= M2Radio_in+pidx+pidy+pidz;//;//+PIDRateY
+																		   M1= M1Radio_in+pidx-pidy-pidz;//;//-PIDRateY
 									                                      //---------------XASIS -----------------------------------
-																		   M3= M3Radio_in-pidx+pidy;//;//+PIDRateY
-																		   M4= M4Radio_in-pidx-pidy;//;//-PIDRateY
+																		   M3= M3Radio_in-pidx+pidy-pidz;//;//+PIDRateY
+																		   M4= M4Radio_in-pidx-pidy+pidz;//;//-PIDRateY
 																		 }
 
 
@@ -1136,6 +1173,11 @@ void TIM2_IRQHandler()
         }
 
         if(timercount%400==0){
+
+        	 ConvertedValue = adc_convert();//Read the ADC converted value
+        	 Batter_V=(((ConvertedValue/4096.0)*2.96)-0.20)*10.0;
+
+
         	 if(flightmode==1){
 
 if((sensorheight>40.00) ){
