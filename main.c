@@ -58,7 +58,7 @@ float xtrim=0,ytrim=0.0;
 int manualradio=14000;
 #define Logbuf 500 //
 int PIDoption=1;  // 0= Gyro , 1 =Angle
-float PGain=0.2,PgainX=0.35,ErrorX=0,ErrorY=0,setX=0,setY=0,setZ,setheight=300,ErrorH=0,GH=100;
+float PGain=0.5,PgainX=0.5,ErrorX=0,ErrorY=0,setX=0,setY=0,setZ,setheight=300,ErrorH=0,GH=100;
 float IGain=0.001,Dgain=0.1,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
 float PgainZ=0.2,IgainZ=0,DgainZ=0.05;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
@@ -922,7 +922,7 @@ if(CRCvalidation==0){
 	if((firstime==0)&(timercount>5200)){
 
 
-		if((flightmode==0) & (StableMode==1) & (sensorheight>20)){
+		if((flightmode==0)  & (sensorheight>100)){
 		setZ=SDM_raw;
         initialbearing=setZ;
         firstime=1;
@@ -938,8 +938,17 @@ if(CRCvalidation==0){
 		   ErrorX=setX-SDM_pitch;//Axr
 		   ErrorY=setY-SDM_roll;
 		   ErrorZ=setZ-SDM_raw;
-/*
 
+		   if((abs(ErrorX)>15)){ PgainX=1.5;}
+		   if((abs(ErrorX)>7) & (abs(ErrorX)<=15)){ PgainX=1;}
+		   if((abs(ErrorX)>4) & (abs(ErrorX)<=7)){ PgainX=0.5;}
+		   if((abs(ErrorX)<=3)){ PgainX=0.35;}
+
+		   if((abs(ErrorY)>15)){ PGain=1.5;}
+		   if((abs(ErrorY)>7) & (abs(ErrorY)<=15)){ PGain=1;}
+		   if((abs(ErrorY)>4) & (abs(ErrorY)<=7)){ PGain=0.5;}
+		   if((abs(ErrorY)<=3)){ PGain=0.35;}
+/*
 			if	((abs(ErrorX)>2)&(abs(ErrorX)<5)){					                     		       //}
 								                     		 PgainX=10;
 							                     		 Dgain=14.5;
@@ -1120,7 +1129,7 @@ if(CRCvalidation==0){
 																		   M4= M4-pidy-pidx;//M4Radio_in-pidx
 
 
-																		   if(sensorheight>20){
+																		   if(sensorheight>100){
 																			   M2= M2-pidz;
 																			   M1= M1+pidz;
 																			   M3= M3+pidz;
