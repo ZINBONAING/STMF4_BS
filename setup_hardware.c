@@ -1318,7 +1318,6 @@ void PWMinput_radioCH3(void)
   GPIO_PinAFConfig(GPIOB, GPIO_PinSource5, GPIO_AF_TIM3);
 
 
-
   /* Enable the TIM4 global Interrupt */
   NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1; //0
@@ -1336,7 +1335,9 @@ void PWMinput_radioCH3(void)
   TIM_ICInitStructure.TIM_Channel = TIM_Channel_2  ;
   TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
   TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
-  TIM_ICInitStructure.TIM_ICPrescaler = 4;//TIM_ICPSC_DIV1;
+  //TIM_ICInitStructure.TIM_ICPrescaler = 4;//TIM_ICPSC_DIV1;
+  TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV1;//TIM_ICPSC_DIV1;
+  TIM_PrescalerConfig(TIM3, 100, TIM_PSCReloadMode_Immediate);   //TIM2CLK/£¨20£©=3.6MHz
   TIM_ICInitStructure.TIM_ICFilter = 0x0;
 
   TIM_PWMIConfig(TIM3, &TIM_ICInitStructure);

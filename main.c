@@ -19,8 +19,10 @@
 //----ok now is to test out moving average and higher sampling---
 
 // End update resilt here.---
-int firstime=0,rawmanualcontrol=1,initialbearing=0;
+int firstime=0,rawmanualcontrol=1,initialbearing=0,newupdate=0;
 float Batter_V=0.0;
+float ChangeinRadio=0,PreviousRadio=180;
+
 
 #define SERIAL_BUFFER_SIZE 512
 char serial_buffer[SERIAL_BUFFER_SIZE] ;
@@ -56,9 +58,9 @@ float xtrim=0,ytrim=0.0;
 int manualradio=14000;
 #define Logbuf 500 //
 int PIDoption=1;  // 0= Gyro , 1 =Angle
-float PGain=15.3,PgainX=15.3,ErrorX=0,ErrorY=0,setX=0,setY=0,setZ,setheight=300,ErrorH=0,GH=100;
-float IGain=0,Dgain=11,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
-float PgainZ=20,IgainZ=0,DgainZ=4;
+float PGain=0.2,PgainX=0.35,ErrorX=0,ErrorY=0,setX=0,setY=0,setZ,setheight=300,ErrorH=0,GH=100;
+float IGain=0.001,Dgain=0.1,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
+float PgainZ=0.2,IgainZ=0,DgainZ=0.05;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
 float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5,RateZPG=0.8,RateZDG=0,RateZIG=0;
 float PreviousErrRateY,ErrRateY,ErrRateZ,PtermRateZ,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY,DiffErrRateZ,PreviousErrRateZ=0,IntErrRateZ,ItermRateZ,PIDRateZ;
@@ -553,8 +555,8 @@ if(serialflag==1){
 
 //RxGyroR
 //	M1Radio_in,M2Radio_in,M3Radio_in,M4Radio_in;
-	serial_output("SetX\t%c%d.%d\t",Csign(setX),C1(setX),C2(setX));
-	serial_output("SetY\t%c%d.%d\t",Csign(setY),C1(setY),C2(setY));
+//	serial_output("SetX\t%c%d.%d\t",Csign(setX),C1(setX),C2(setX));
+//	serial_output("SetY\t%c%d.%d\t",Csign(setY),C1(setY),C2(setY));
 	serial_output("SetZ\t%c%d.%d\t",Csign(setZ),C1(setZ),C2(setZ));
     serial_output("ErrZ:\t%c%d.%d\t",Csign(ErrorZ),C1(ErrorZ),C2(ErrorZ));
     serial_output("Voltage \t%c%d.%d,",Csign(Batter_V),C1(Batter_V),C2(Batter_V));
@@ -619,10 +621,10 @@ if(serialflag==1){
   //  serial_output("%d,",M3);
   //  serial_output("%d,",M4);
  //   serial_output("%d,",sensorheight);
-   serial_output("Height\t%c%d.%d cm\t",Csign(sensorheight),C1(sensorheight),C2(sensorheight));
-   serial_output("AC\t %c%d.%d\t cm,",Csign(actualclimbrate),C1(actualclimbrate),C2(actualclimbrate));
-   serial_output(" EAC\t %c%d.%d\t cm,",Csign( ErrorClimbrate),C1( ErrorClimbrate),C2( ErrorClimbrate));
-
+//   serial_output("Height\t%c%d.%d cm\t",Csign(sensorheight),C1(sensorheight),C2(sensorheight));
+//   serial_output("AC\t %c%d.%d\t cm,",Csign(actualclimbrate),C1(actualclimbrate),C2(actualclimbrate));
+//   serial_output(" EAC\t %c%d.%d\t cm,",Csign( ErrorClimbrate),C1( ErrorClimbrate),C2( ErrorClimbrate));
+//
 
    // serial_output("motor=%d,",StartMotor);
  //   serial_output("FlightMode=%d\t",flightmode);
@@ -660,6 +662,7 @@ if(serialflag==1){
 
  //   serial_output("IntErrRateX=\t%c%d.%d\t",Csign(IntErrRateX),C1(IntErrRateX),C2(IntErrRateX));
  //   serial_output("IntErrRateY=\t%c%d.%d\t",Csign(IntErrRateY),C1(IntErrRateY),C2(IntErrRateY));
+   serial_output("ChangeinRadio=\t%c%d.%d\t",Csign( ChangeinRadio),C1( ChangeinRadio),C2( ChangeinRadio));
 
 
 
@@ -740,7 +743,7 @@ else
 void radio_in(){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //	 serial_output("Radio signal=\t%c%d.%d\t",Csign(DutyCycle2_radio),C1(DutyCycle2_radio),C2(DutyCycle2_radio));
-        if(DutyCycle2_radio<20000)
+        if(DutyCycle2_radio<200)
         {
         	Rstate=ns_radio;
             switch(Rstate)
@@ -772,13 +775,24 @@ void radio_in(){
          }
 
 
-	    if((DutyCycle2_radio>20000) && (DutyCycle2_radio<40000))
+	    if((DutyCycle2_radio>180) && (DutyCycle2_radio<320))
 
 	    {
 
          //  radioin=manualradio;
 
-	   radioin=((DutyCycle2_radio-20000)/1.358)+8100;
+	    	//radioin=(((DutyCycle2_radio*10)-20000)/1.358)+8100;
+            newupdate=1;
+	    	radioin=DutyCycle2_radio;
+	    	ChangeinRadio=radioin-PreviousRadio;
+
+
+
+	    	PreviousRadio=radioin;
+	        //MXlimit= radioin*1.3;
+if(ChangeinRadio!=0){
+	        ChangeinRadio=((ChangeinRadio)/1.358)*100;
+}
 	 //  radioin=10000.00;
 	    /*
        	m2m4_rpm=(-0.0002996819 *(radioin)*(radioin)) +7.5004877*(radioin) -40913.2314;
@@ -908,7 +922,7 @@ if(CRCvalidation==0){
 	if((firstime==0)&(timercount>5200)){
 
 
-		if((flightmode==0) & (StableMode==1) & (sensorheight>100)){
+		if((flightmode==0) & (StableMode==1) & (sensorheight>20)){
 		setZ=SDM_raw;
         initialbearing=setZ;
         firstime=1;
@@ -940,7 +954,7 @@ if(CRCvalidation==0){
 							  PgainX=11;
 							  Dgain=18;
 
-						}
+				Radio_status		}
 
 */
 
@@ -1099,19 +1113,30 @@ if(CRCvalidation==0){
 									   M4= M4Radio_in-PIDRateZ;//;//-PIDRateX-PIDRateY
 									 }
 									 if(PIDoption==1){
-																		   M2= M2Radio_in-pidz+pidx+pidy;
-																		   M1= M1Radio_in+pidz+pidx-pidy;
+																		   M2= M2+pidy+pidx;// M2Radio_in+pidx
+																		   M1= M1-pidy+pidx;//M1Radio_in+pidx
 									                                      //---------------XASIS -----------------------------------
-																		   M3= M3Radio_in+pidz-pidx+pidy;
-																		   M4= M4Radio_in-pidz-pidx-pidy;
+																		   M3= M3+pidy-pidx;//M3Radio_in-pidx
+																		   M4= M4-pidy-pidx;//M4Radio_in-pidx
 
 
-																		   if(sensorheight>100){
+																		   if(sensorheight>20){
 																			   M2= M2-pidz;
 																			   M1= M1+pidz;
 																			   M3= M3+pidz;
 																			   M4= M4-pidz;
 
+																		   }
+
+
+																		   if(newupdate==1){
+
+																			   M2= M2+ChangeinRadio;// M2Radio_in+pidx
+																			   M1= M1+ChangeinRadio;//M1Radio_in+pidx
+																			   									                                      //---------------XASIS -----------------------------------
+																			   M3= M3+ChangeinRadio;//M3Radio_in-pidx
+																			   M4= M4+ChangeinRadio;//M4Radio_in-pidx
+																			   newupdate=0;
 																		   }
 
 
@@ -1211,7 +1236,7 @@ void TIM2_IRQHandler()
         	timercount=5000;
         }
 
-        if(timercount%100==0){
+        if(timercount%300==0){
         	serialflag=1;
         }
 
