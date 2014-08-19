@@ -4,12 +4,10 @@
 #include "stm32f4xx_gpio.h"
 #include "stm32f4xx_rcc.h"
 #include <stm32f4xx_i2c.h>
-#include "stm32f4xx_adc.h"
 #include <MPU9150.h>
 #include "stm32f4xx_rcc.h"
 #include <stdio.h>
 #include <stdarg.h>
-#include <stdlib.h>
 #include <string.h>
 #include <misc.h>			 // I recommend you have a look at these in the ST firmware folder
 #include <math.h>
@@ -17,30 +15,14 @@
 #include <stm32f4xx_it.h>
 #include <Global_variables.h>
 int Buf_counter=0, bufcount=0;
-char GPS_Received[100];
-int GPS_bufcounter=0,GPS_ns=0,GPS_RDY=0,GPS_capture;
-
-
-
-
-
-double x[30];
-int xcounter=0;
-int latdeg,londeg;
-	    		      double latmin,lonmin;
-	    		      double lat,lon;
-	    		      double lat2=1.343895,lon2=103.7063479,currentheading,desiredheading;
-
-
-	    		      int R = 6371; // km
 
 
 
 
 
 
-//-------------------- GPS---------------------
-void init_USART4(uint32_t baudrate){
+
+void init_USART3(uint32_t baudrate){
 
 	/* This is a concept that has to do with the libraries provided by ST
 	 * to make development easier the have made up something similar to
@@ -60,10 +42,10 @@ void init_USART4(uint32_t baudrate){
 	 */
 	/* --------------------------- System Clocks Configuration -----------------*/
 	  /* USART3 clock enable */
-	  RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART4, ENABLE);
+	  RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
 
 	  /* GPIOB clock enable */
-	  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+	  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
 
 	/* This sequence sets up the TX and RX pins
 	GPIO_InitTypeDef GPIO_InitStructure;
@@ -74,16 +56,16 @@ void init_USART4(uint32_t baudrate){
   GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_Init(GPIOC, &GPIO_InitStruct);
+  GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* Connect USART pins to AF */
-  GPIO_PinAFConfig(GPIOC, GPIO_PinSource10, GPIO_AF_UART4);
-  GPIO_PinAFConfig(GPIOC, GPIO_PinSource11, GPIO_AF_UART4);
+  GPIO_PinAFConfig(GPIOB, GPIO_PinSource10, GPIO_AF_USART3);
+  GPIO_PinAFConfig(GPIOB, GPIO_PinSource11, GPIO_AF_USART3);
 
 	/* Now the USART_InitStruct is used to define the
 	 * properties of USART1
 	 */
-    USART_InitStruct.USART_BaudRate = 9600;
+    USART_InitStruct.USART_BaudRate = 57600;
     USART_InitStruct.USART_WordLength = USART_WordLength_8b;
     USART_InitStruct.USART_StopBits = USART_StopBits_1;
     USART_InitStruct.USART_Parity = USART_Parity_No;
@@ -91,26 +73,21 @@ void init_USART4(uint32_t baudrate){
 
     USART_InitStruct.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
 
-    USART_Init(UART4, &USART_InitStruct);
-    USART_ITConfig(UART4, USART_IT_RXNE, ENABLE); // enable the USART1 receive interrupt
+    USART_Init(USART3, &USART_InitStruct);
+    USART_ITConfig(USART3, USART_IT_RXNE, ENABLE); // enable the USART1 receive interrupt
 
-        	NVIC_InitStructure.NVIC_IRQChannel = UART4_IRQn;		 // we want to configure the USART1 interrupts
-        	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 6;// this sets the priority group of the USART1 interrupts
+        	NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;		 // we want to configure the USART1 interrupts
+        	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 5;// this sets the priority group of the USART1 interrupts
         	NVIC_InitStructure.NVIC_IRQChannelSubPriority =0;		 // this sets the subpriority inside the group
         	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			 // the USART1 interrupts are globally enabled
         	NVIC_Init(&NVIC_InitStructure);							 // the properties are passed to the NVIC_Init function which takes care of the low level stuff
-    USART_Cmd(UART4, ENABLE);
-
+    USART_Cmd(USART3, ENABLE);
 
 
 
 
 
 }
-
-//------------------ End GPS------------------
-
-
 
 
 //----------------------------UART 4 for 3DM----------------------------------------------------------
@@ -247,148 +224,11 @@ void UART2_sendbyte(uint8_t cmdbyte){
 // this is the interrupt request handler (IRQ) for ALL USART1 interrupts
 
 
-void UART4_IRQHandler(void){
-
-/*
- *
- * Global Positioning System Fix Data
-
-eg1. $GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62
-eg2. $GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*68
-
-
-           225446       Time of fix 22:54:46 UTC
-           A            Navigation receiver warning A = OK, V = warning
-           4916.45,N    Latitude 49 deg. 16.45 min North
-           12311.12,W   Longitude 123 deg. 11.12 min West
-           000.5        Speed over ground, Knots
-           054.7        Course Made Good, True
-           191194       Date of fix  19 November 1994
-           020.3,E      Magnetic variation 20.3 deg East
-           *68          mandatory checksum
- *
- *
- *
- *
- */
-
-	 const char s= ",";
-	   char *token;
-
-
-	// check if the USART4 receive interrupt flag was set
-	if( USART_GetITStatus(UART4, USART_IT_RXNE) ){
-
-
-
-		static uint8_t cnt = 0; // this counter is used to determine the string length
-		char t = UART4->DR; // the character from the USART1 data register is saved int
-
-	    if(t=='$') GPS_ns=1;
-//#$GPRMA
-	    switch(GPS_ns){
-	    case 0:GPS_ns=0;break;
-	    case 1:if (t=='$') GPS_ns=2;else GPS_ns=0;break;
-        case 2:if (t=='G') GPS_ns=3;else GPS_ns=0;break;
-        case 3:if (t=='P') GPS_ns=4;else GPS_ns=0;break;
-        case 4:if (t=='R') GPS_ns=5;else GPS_ns=0;break;
-        case 5:if (t=='M') GPS_ns=6;else GPS_ns=0;break;
-        case 6:	if (t=='C')  GPS_capture=1;else GPS_ns=0;break;
-
-
-	    }
-
-	    if(GPS_capture==1){
-	    GPS_Received[GPS_bufcounter++]=t;
-	    	if(t=='\n'){
-
-	    		   int g;
-	    			    for (g=0;g<31;g++){
-	    			    	x[g]=0.0;
-
-	    			    }
-
-	    		GPS_bufcounter=0;
-	    		GPS_capture=0;
-	    		GPS_RDY=1;
-
-	    		  /* get the first token */
-	    		   token = strtok(GPS_Received,",");
-double xx;
-	    		   /* walk through other tokens */
-	    		   while( token != NULL )
-	    		   {
-	    		      token = strtok(NULL,",");
-
-
-	    		      xx= atof(token);     /* x = -2309.12E-15 */
-
-	    		      x[xcounter++] =xx;     /* x = -2309.12E-15 */
-	    		      if(xcounter==3){
-
-
-	    		    	  latdeg	=  xx/100.00;
-	    		    	  latmin=( xx-(latdeg*100))/60;
-	    		    	  lat=latdeg+latmin;
-
-
-	    		     	    		      }
-
-	    		      if(xcounter==5){
-
-
-	    		     	    		    	  londeg	=  xx/100.00;
-	    		     	    		    	  lonmin=( xx-(londeg*100))/60;
-	    		     	    		    	  lon=londeg+lonmin;
-
-
-	    		     	    		     	    		      }
-
-
-	    		   }
-	    		   xcounter=0;
-
-	    		     float Phi1 = lat*PI/180.00;
-
-
-	    			    		      float Phi2 = lat2*PI/180.00;
-	    			    		      float DelPhi = (lat2-lat)*PI/180.0;
-	    			    		      float DelGamma = (lon2-lon)*PI/180.0;
-
-	    			    		      float a =sin(DelPhi/2) *sin(DelPhi/2) +cos(Phi1) *cos(Phi2) * sin(DelGamma/2) *sin(DelGamma/2);
-	    			    		      float c = 2 * atan2(sqrt(a), sqrt(1-a));
-
-	    			    		      float d = R * c;
-
-
-	    		   return(0);
-
-
-	    	}
-
-
-	    }
-
-
-
-
-
-
-if(GPS_bufcounter>99){
-	GPS_bufcounter=0;
-}
-
-	}
-}
-
-
-
 
 
 void USART2_IRQHandler(void){
 	GPIOD->BSRRL = 0x4000; // set PD1
 	// check if the USART4 receive interrupt flag was set
-
 	if( USART_GetITStatus(USART2, USART_IT_RXNE) ){
 
 		static uint8_t cnt = 0; // this counter is used to determine the string length
@@ -450,7 +290,7 @@ if(t==0x31){
 					        DM_CompAngRateY_cal=((receivedmsg[15]<<8)+(receivedmsg[16]));
 					        DM_CompAngRateZ_cal=((receivedmsg[17]<<8)+(receivedmsg[18]));
 					        DM_CompAngRateX=(DM_CompAngRateX_cal/GyroGain)*180/PI;
-					        DM_CompAngRateZ=(DM_CompAngRateZ_cal/GyroGain)*180/PI;
+					        DM_CompAngRateY=(DM_CompAngRateY_cal/GyroGain)*180/PI;
 					        //  Gyro_sensitivity
 					      DM_TimerTicks_cal=((receivedmsg[19]<<8)+(receivedmsg[20]));
 					      checksum=((receivedmsg[21]<<8)+(receivedmsg[22]));
@@ -721,13 +561,13 @@ while(!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_BYTE_TRANSMITTED))
 void MPUIni_init16(void)
 {
 	// need at least 60 msec delay here
-	Delay(20);
+	Delay1(20);
 	MPU9150_writeSensor(MPU9150_PWR_MGMT_1, 0x0);
-	Delay(20);
+	Delay1(20);
 	MPU9150_writeSensor(MPU9150_ACCEL_CONFIG, 0x04); //+-8G 0.63Hz
-    Delay(20);
+    Delay1(20);
     MPU9150_writeSensor(MPU9150_GYRO_CONFIG, 0x00); //+/1 500 deg per sec
-     Delay(20);
+     Delay1(20);
 
 }
 
@@ -739,11 +579,11 @@ void  MPU9150_writeSensor(uint16_t addr, uint16_t data)
 	I2C_start(I2C1, SLAVE_ADDRESS<<1, I2C_Direction_Transmitter);
 	I2C_write(I2C1,addr);
 	//I2C_stop(I2C1);
-	Delay(50);
+	Delay1(50);
 	//I2C_start(I2C1, SLAVE_ADDRESS<<1, I2C_Direction_Transmitter);
 	I2C_write(I2C1,data);
 	I2C_stop(I2C1);
-	//Delay(100);
+	//Delay1(100);
 	// this delay is necessary; it appears that SS must be deasserted for one or
 	// more SPI clock cycles between writes
 	// __delay_us(1);
@@ -772,7 +612,7 @@ int MPU9150_read1byte(int address){
 	 // Wire.beginTransmission(MPU9150_I2C_ADDRESS);
 	 // Wire.write(addrL);
 	 // Wire.endTransmission(false);
-	Delay(50);
+	Delay1(50);
 	I2C_start(I2C1, SLAVE_ADDRESS<<1, I2C_Direction_Receiver); // start a transmission in Master receiver mode
 	Read_reg = I2C_read_nack(I2C1);
 	return Read_reg;
@@ -788,7 +628,7 @@ I2C_stop(I2C1);
  // Wire.beginTransmission(MPU9150_I2C_ADDRESS);
  // Wire.write(addrL);
  // Wire.endTransmission(false);
-Delay(50);
+Delay1(50);
 I2C_start(I2C1, SLAVE_ADDRESS<<1, I2C_Direction_Receiver); // start a transmission in Master receiver mode
 byte_L = I2C_read_nack(I2C1);
 //I2C_stop(I2C1);
@@ -1062,7 +902,7 @@ void InitPWM4(){
 void PWMinput_sound(void)
 {
 
-TIM_ICInitTypeDef  TIM_ICInitStructure;
+	TIM_ICInitTypeDef  TIM_ICInitStructure;
   GPIO_InitTypeDef GPIO_InitStructure;
   NVIC_InitTypeDef NVIC_InitStructure;
 
@@ -1092,8 +932,8 @@ TIM_ICInitTypeDef  TIM_ICInitStructure;
 
   /* Enable the TIM4 global Interrupt */
   NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2; //0
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 4; //0
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);
 
@@ -1151,19 +991,18 @@ void PWMinput_radioCH3(void)
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
 
   /* GPIOB clock enable */
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 
   /* TIM4 chennel2 configuration : PB.07 */
-  GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_5 ;
+  GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_7;
   GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP ;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
 
   /* Connect TIM pin to AF2 */
-  GPIO_PinAFConfig(GPIOB, GPIO_PinSource5, GPIO_AF_TIM3);
-
+  GPIO_PinAFConfig(GPIOC, GPIO_PinSource7, GPIO_AF_TIM3);
 
   /* Enable the TIM4 global Interrupt */
   NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
@@ -1179,18 +1018,15 @@ void PWMinput_radioCH3(void)
      The TIM4 CCR1 is used to compute the duty cycle value
   ------------------------------------------------------------ */
 
-  TIM_ICInitStructure.TIM_Channel = TIM_Channel_2  ;
+  TIM_ICInitStructure.TIM_Channel = TIM_Channel_2;
   TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
   TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
-  //TIM_ICInitStructure.TIM_ICPrescaler = 4;//TIM_ICPSC_DIV1;
-  TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV1;//TIM_ICPSC_DIV1;
-  TIM_PrescalerConfig(TIM3, 100, TIM_PSCReloadMode_Immediate);   //TIM2CLK/£¨20£©=3.6MHz
+  TIM_ICInitStructure.TIM_ICPrescaler = 4;//TIM_ICPSC_DIV1;
   TIM_ICInitStructure.TIM_ICFilter = 0x0;
 
   TIM_PWMIConfig(TIM3, &TIM_ICInitStructure);
 
   /* Select the TIM4 Input Trigger: TI2FP2 */
-
   TIM_SelectInputTrigger(TIM3, TIM_TS_TI2FP2);
 
   /* Select the slave Mode: Reset Mode */
@@ -1201,10 +1037,7 @@ void PWMinput_radioCH3(void)
   TIM_Cmd(TIM3, ENABLE);
 
   /* Enable the CC2 Interrupt Request */
-
   TIM_ITConfig(TIM3, TIM_IT_CC2, ENABLE);
-
-
 
 }
 void PWMinput_radioCH6(void)
@@ -1325,256 +1158,3 @@ void Delay1(__IO uint32_t nCount) {
   while(nCount--) {
   }
 }
-
-
-
-//---- New Radio Inputs ----- 27July14
-
-void PWMinput_radioCH1(void)
-{
-
-	TIM_ICInitTypeDef  TIM_ICInitStructure;
-  GPIO_InitTypeDef GPIO_InitStructure;
-  NVIC_InitTypeDef NVIC_InitStructure;
-
-  /* TIM4 clock enable */
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8, ENABLE);
-
-  /* GPIOB clock enable */
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-
-  /* TIM8 chennel2 configuration : PC.07 */
-  GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_7 ;
-  GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP ;
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-  /* Connect TIM pin to AF2 */
-  GPIO_PinAFConfig(GPIOC, GPIO_PinSource7, GPIO_AF_TIM8);
-
-
-
-  /* Enable the TIM4 global Interrupt */
-  NVIC_InitStructure.NVIC_IRQChannel = TIM8_CC_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1; //0
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&NVIC_InitStructure);
-
-  /* TIM4 configuration: PWM Input mode ------------------------
-     The external signal is connected to TIM4 CH2 pin (PB.07),
-     The Rising edge is used as active edge,
-     The TIM4 CCR2 is used to compute the frequency value
-     The TIM4 CCR1 is used to compute the duty cycle value
-  ------------------------------------------------------------ */
-
-  TIM_ICInitStructure.TIM_Channel = TIM_Channel_2  ;
-  TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
-  TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
-  TIM_ICInitStructure.TIM_ICPrescaler = 4;//TIM_ICPSC_DIV1;
-  TIM_ICInitStructure.TIM_ICFilter = 0x0;
-
-  TIM_PWMIConfig(TIM8, &TIM_ICInitStructure);
-
-  /* Select the TIM4 Input Trigger: TI2FP2 */
-
-  TIM_SelectInputTrigger(TIM8, TIM_TS_TI2FP2);
-
-  /* Select the slave Mode: Reset Mode */
-  TIM_SelectSlaveMode(TIM8, TIM_SlaveMode_Reset);
-  TIM_SelectMasterSlaveMode(TIM8,TIM_MasterSlaveMode_Enable);
-
-  /* TIM enable counter */
-  TIM_Cmd(TIM8, ENABLE);
-
-  /* Enable the CC2 Interrupt Request */
-
-  TIM_ITConfig(TIM8, TIM_IT_CC2, ENABLE);
-
-
-
-}
-
-void PWMinput_radioCH2(void)
-{
-
-	TIM_ICInitTypeDef  TIM_ICInitStructure;
-  GPIO_InitTypeDef GPIO_InitStructure;
-  NVIC_InitTypeDef NVIC_InitStructure;
-
-  /* TIM4 clock enable */
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM12, ENABLE);
-
-  /* GPIOB clock enable */
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-
-  /* TIM8 chennel2 configuration : PC.07 */
-  GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_15 ;
-  GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP ;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
-
-  /* Connect TIM pin to AF2 */
-  GPIO_PinAFConfig(GPIOB, GPIO_PinSource15, GPIO_AF_TIM12);
-
-
-
-  /* Enable the TIM4 global Interrupt */
-  NVIC_InitStructure.NVIC_IRQChannel = TIM8_BRK_TIM12_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1; //0
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&NVIC_InitStructure);
-
-  /* TIM4 configuration: PWM Input mode ------------------------
-     The external signal is connected to TIM4 CH2 pin (PB.07),
-     The Rising edge is used as active edge,
-     The TIM4 CCR2 is used to compute the frequency value
-     The TIM4 CCR1 is used to compute the duty cycle value
-  ------------------------------------------------------------ */
-
-  TIM_ICInitStructure.TIM_Channel = TIM_Channel_2  ;
-  TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
-  TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
-  TIM_ICInitStructure.TIM_ICPrescaler = 4;//TIM_ICPSC_DIV1;
-  TIM_ICInitStructure.TIM_ICFilter = 0x0;
-
-  TIM_PWMIConfig(TIM12, &TIM_ICInitStructure);
-
-  /* Select the TIM4 Input Trigger: TI2FP2 */
-
-  TIM_SelectInputTrigger(TIM12, TIM_TS_TI2FP2);
-
-  /* Select the slave Mode: Reset Mode */
-  TIM_SelectSlaveMode(TIM12, TIM_SlaveMode_Reset);
-  TIM_SelectMasterSlaveMode(TIM12,TIM_MasterSlaveMode_Enable);
-
-  /* TIM enable counter */
-  TIM_Cmd(TIM12, ENABLE);
-
-  /* Enable the CC2 Interrupt Request */
-
-  TIM_ITConfig(TIM12, TIM_IT_CC2, ENABLE);
-
-
-
-}
-
-
-void PWMinput_radioCH4(void)
-{
-
-	TIM_ICInitTypeDef  TIM_ICInitStructure;
-  GPIO_InitTypeDef GPIO_InitStructure;
-  NVIC_InitTypeDef NVIC_InitStructure;
-
-  /* TIM4 clock enable */
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM9, ENABLE);
-
-  /* GPIOB clock enable */
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-
-  /* TIM8 chennel2 configuration : PC.07 */
-  GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_3 ;
-  GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP ;
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-  /* Connect TIM pin to AF2 */
-  GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_TIM9);
-
-
-
-  /* Enable the TIM4 global Interrupt */
-  NVIC_InitStructure.NVIC_IRQChannel = TIM1_BRK_TIM9_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1; //0
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 4;
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&NVIC_InitStructure);
-
-  /* TIM4 configuration: PWM Input mode ------------------------
-     The external signal is connected to TIM4 CH2 pin (PB.07),
-     The Rising edge is used as active edge,
-     The TIM4 CCR2 is used to compute the frequency value
-     The TIM4 CCR1 is used to compute the duty cycle value
-  ------------------------------------------------------------ */
-
-  TIM_ICInitStructure.TIM_Channel = TIM_Channel_2  ;
-  TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
-  TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
-  TIM_ICInitStructure.TIM_ICPrescaler = 4;//TIM_ICPSC_DIV1;
-  TIM_ICInitStructure.TIM_ICFilter = 0x0;
-
-  TIM_PWMIConfig(TIM9, &TIM_ICInitStructure);
-
-  /* Select the TIM4 Input Trigger: TI2FP2 */
-
-  TIM_SelectInputTrigger(TIM9, TIM_TS_TI2FP2);
-
-  /* Select the slave Mode: Reset Mode */
-  TIM_SelectSlaveMode(TIM9, TIM_SlaveMode_Reset);
-  TIM_SelectMasterSlaveMode(TIM9,TIM_MasterSlaveMode_Enable);
-
-  /* TIM enable counter */
-  TIM_Cmd(TIM9, ENABLE);
-
-  /* Enable the CC2 Interrupt Request */
-
-  TIM_ITConfig(TIM9, TIM_IT_CC2, ENABLE);
-
-
-
-}
-
-
-// ---- End new radio inputs ---- 27 July 14
-//---Added ADC inputs-------------
-
-
-
-
-
-void adc_configure(){
- ADC_InitTypeDef ADC_init_structure; //Structure for adc confguration
- GPIO_InitTypeDef GPIO_initStructre; //Structure for analog input pin
- //Clock configuration
- RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1,ENABLE);//The ADC1 is connected the APB2 peripheral bus thus we will use its clock source
- RCC_AHB1PeriphClockCmd(RCC_AHB1ENR_GPIOCEN,ENABLE);//Clock for the ADC port!! Do not forget about this one ;)
- //Analog pin configuration
- GPIO_initStructre.GPIO_Pin = GPIO_Pin_0;//The channel 10 is connected to PC0
- GPIO_initStructre.GPIO_Mode = GPIO_Mode_AN; //The PC0 pin is configured in analog mode
- GPIO_initStructre.GPIO_PuPd = GPIO_PuPd_NOPULL; //We don't need any pull up or pull down
- GPIO_Init(GPIOC,&GPIO_initStructre);//Affecting the port with the initialization structure configuration
- //ADC structure configuration
- ADC_DeInit();
- ADC_init_structure.ADC_DataAlign = ADC_DataAlign_Right;//data converted will be shifted to right
- ADC_init_structure.ADC_Resolution = ADC_Resolution_12b;//Input voltage is converted into a 12bit number giving a maximum value of 4096
- ADC_init_structure.ADC_ContinuousConvMode = ENABLE; //the conversion is continuous, the input data is converted more than once
- ADC_init_structure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_T1_CC1;// conversion is synchronous with TIM1 and CC1 (actually I'm not sure about this one :/)
- ADC_init_structure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;//no trigger for conversion
- ADC_init_structure.ADC_NbrOfConversion = 1;//I think this one is clear :p
- ADC_init_structure.ADC_ScanConvMode = DISABLE;//The scan is configured in one channel
- ADC_Init(ADC1,&ADC_init_structure);//Initialize ADC with the previous configuration
- //Enable ADC conversion
- ADC_Cmd(ADC1,ENABLE);
- //Select the channel to be read from
- ADC_RegularChannelConfig(ADC1,ADC_Channel_10,1,ADC_SampleTime_144Cycles);
- //ADC_RegularChannelConfig(ADC1,ADC_Channel_10,1,ADC_SampleTime_480Cycles);
-
-
-}
-int adc_convert(){
- ADC_SoftwareStartConv(ADC1);//Start the conversion
- while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC));//Processing the conversion
- return ADC_GetConversionValue(ADC1); //Return the converted data
-}
-
-
-
-//-- End adding ADC inputs--------

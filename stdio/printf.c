@@ -504,7 +504,7 @@ signed int puts(const char *pStr)
 
 
 /**
- * @brief  Implementation of fputc using the DBGU as the standard output. Required
+ * @brief  Implementation of fputc1 using the DBGU as the standard output. Required
  *         for printf().
  *
  * @param c        Character to write.
@@ -512,7 +512,7 @@ signed int puts(const char *pStr)
  * @param The character written if successful, or -1 if the output stream is
  *        not stdout or stderr.
  */
-signed int fputc(signed int c, FILE *pStream)
+signed int fputc1(signed int c, FILE *pStream)
 {
     if ((pStream == stdout) || (pStream == stderr)) {
 
@@ -543,7 +543,7 @@ signed int fputs(const char *pStr, FILE *pStream)
 
     while (*pStr != 0) {
 
-        if (fputc(*pStr, pStream) == -1) {
+        if (fputc1(*pStr, pStream) == -1) {
 
             return -1;
         }

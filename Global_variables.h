@@ -1,5 +1,25 @@
-extern void fuseGyroAcc(int,int,int,int,int,int);
+#include <stm32f4xx.h>
+#include <stm32f4xx_usart.h> // under Libraries/STM32F4xx_StdPeriph_Driver/inc and src
+#include <stdio.h>
+#include "stm32f4xx_gpio.h"
+#include "stm32f4xx_rcc.h"
+#include <stm32f4xx_i2c.h>
+#include <MPU9150.h>
+#include "stm32f4xx_rcc.h"
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+#include <misc.h>			 // I recommend you have a look at these in the ST firmware folder
+#include <math.h>
+#include "stm32f4xx_tim.h"
+#include <stm32f4xx_it.h>
 
+extern void fuseGyroAcc(int,int,int,int,int,int);
+extern float PitchAngle;
+extern float RollAngle;
+extern float RawAngle;
+
+#define MPU9150
 extern char Csign(float);
 extern int C1(float);
 extern int C2(float);
@@ -24,8 +44,6 @@ extern int movavgcounter;
 extern int expect_received;
 extern int received_msg;
 extern int16_t receivedmsg[25];
-extern int ConvertedValue;
-extern float Batter_V;
 //good performance
 //P=0.09, D=0.008
 // P=0.07, D=0.006
@@ -66,7 +84,7 @@ extern float pidx,pidy;
 #define I2C_TIMEOUT  (0x10)
 #define PI 3.14159265358979
 extern float MXlimit;
-#define MNlimit 500
+extern float MNlimit;
 #define step 100
 //Version Number : Major.Minor.Complete/Progress
 // Revision : ZIO1.M1.2 # added PWM for motor

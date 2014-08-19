@@ -15,9 +15,6 @@
 #include <stm32f4xx_it.h>
 int RX_indidate=0;
 
-
-
-
 #include "uart.h"
 #include "i2c.h"
 #include "gpio.h"
@@ -39,36 +36,11 @@ int RX_indidate=0;
 //----ok now is to test out moving average and higher sampling---
 
 // End update resilt here.---
-//-----------------------Defination to see what IMU to use------------------
-
-//#define IMU_9150_ENABLE;   // we can enable  both if we need to collect 2 sensors data-default
-#define IMU_3DM_ENABLE  ;   //we can enable  both if we need to collect 2 sensors data
-
-
-
-//#define SELECT_IMU_9150 ;//    IMU selection can be activated one at a time, need to enable   IMU_9150_ENABLE
-#define SELECT_IMU_3DMDX2;// IMU selection can be activated one at a time, need to enable  IMU_3DM_ENABLE
-#define  IMU_3DMONLY_ENABLE; //if this is enable 9150 routine will be disabled
-//--------------------to print out debug messages to compare 2 IMU------------
-//#define COMPARE_3DM_9150;
-#define NOTCOMPARE
-#define INCREMENTAL_PID         //if this is enable , it will detect change in radio and correct it based on incremental changes
-//--------------------------------
-
-
-
-//---------------------------------------------------------------------------
-
 
 
 float PitchAngle;
 float RollAngle;
 float RawAngle;
-
-int firstime=0,rawmanualcontrol=1,initialbearing=0,newupdate=0;
-float Batter_V=0.0;
-float ChangeinRadio=0,PreviousRadio=180;
-
 
 #define SERIAL_BUFFER_SIZE 512
 char serial_buffer[SERIAL_BUFFER_SIZE] ;
@@ -83,8 +55,6 @@ int movavgcounter=0;
 int XErrbuf;
 int expect_received=0,received_msg=0;
 int16_t receivedmsg[25];
-int takeoff=0;
-float xtrim=0,ytrim=0.0;
 // P=0.8 , I=0.1 , D=0.225
 // P=3, I=1, D=0.3
 //P=0.17 D=0.16 when upper limit set to 600
@@ -104,32 +74,19 @@ float xtrim=0,ytrim=0.0;
 int manualradio=14000;
 #define Logbuf 500 //
 int PIDoption=1;  // 0= Gyro , 1 =Angle
-float PGain=0.5,PgainX=0.5,ErrorX=0,ErrorY=0,setX=0,setY=0,setZ,setheight=300,ErrorH=0,GH=100;
-float IGain=0.001,Dgain=0.1,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
-float PgainZ=0.2,IgainZ=0,DgainZ=0.05;
+float PGain=10,PgainX=10,ErrorX=0,ErrorY=0,setX=0,setY=0,setheight,ErrorH=0,GH=0.0005;
+float IGain=0,Dgain=14,err_diffX=0.0,err_diffY=0.0,int_errX=0.0,int_errY=0.0,PreviousErrX=0.0,PreviousErrY=0.0;
 //--------------------------------------------- Rate PID ---------------------------------------------------------
-float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5,RateZPG=0.8,RateZDG=0,RateZIG=0;
-float PreviousErrRateY,ErrRateY,ErrRateZ,PtermRateZ,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY,DiffErrRateZ,PreviousErrRateZ=0,IntErrRateZ,ItermRateZ,PIDRateZ;
-float PIDRateY,DtermRateZ,PIDRateZ;
-float PreviousAlt_M1=13000,PreviousAlt_M2=13000,PreviousAlt_M3=13000,PreviousAlt_M4=13000;
-
-/*
-ErrRateZ=setZ-DM_CompAngRateZ
-							 	PtermRateZ=	ErrRateZ*RateZPG;
-							 	DiffErrRateZ=ErrRateZ-PreviousErrRateZ;
-							 	DtermRateZ=DiffErrRateZ*RateZDG;
-							 	IntErrRateZ=IntErrRateZ+ErrRateZ;
-							 	ItermRateZ=RateZIG*IntErrRateZ;
-							 	PIDRateZ=PtermRateZ+DtermRateZ+ItermRateZ;
-*/
-
+float RateYPG=0.8,RateYDG=0,RateYIG=0,SetYRate=5;
+float PreviousErrRateY,ErrRateY,DiffErrRateY,IntErrRateY,PtermRateY,DtermRateY,ItermRateY;
+float PIDRateY;
 
 
 float RateXPG=0.8,RateXDG=0,RateXIG=0.000,SetXRate=5;
 float PreviousErrRateX,ErrRateX,DiffErrRateX,IntErrRateX,PtermRateX,DtermRateX,ItermRateX;
 float PIDRateX,Axz,Ayz,RateAyzpast;
 
-float p_termz=0.0,i_termz=0.0,d_termz=0.0,pidz,PreviousErrZ,ErrorZ,err_diffZ,int_errZ;
+
 float p_termx=0.0,i_termx=0.0,d_termx=0.0,p_termy=0.0,i_termy=0.0,d_termy=0.0;
 float pidx=0.0,pidy=0.0;
 float M1=500,M2=500,M3=500,M4=500;
@@ -141,28 +98,17 @@ float temperrX,temperrY;
 int flightmode=0;
 #define I2C_TIMEOUT  (0x5)
 #define PI 3.14159265358979
-float MXlimit=15000;
-float MNlimit=9900;
+float MXlimit=13000;
+#define MNlimit 8100
 #define step 100
 
 int IC2Value_radio, DutyCycle_radio,DutyCycle2_radio,Frequency_radio,curr_ch3,prev_ch3;
 int IC2Value_radioCh5,DutyCycle_radio5,DutyCycle2_radio5,Frequency_radio5;
-int IC2Value_radioCh1,DutyCycle_radio1,DutyCycle2_radio1,Frequency_radio1;
-int IC2Value_radioCh2,DutyCycle_radio2,DutyCycle2_radio2,Frequency_radio2;
-int IC2Value_radioCh4,DutyCycle_radio4,DutyCycle2_radio4,Frequency_radio4;
-
 int IC2Value_radioCh9,DutyCycle_radio9,DutyCycle2_radio9,Frequency_radio9;
 float sensorheight=0;
 
 
-float PGainH=0.5,IGainH=0,DgainH=4,CRateGain=25;
-float setclimbrate=15,actualclimbrate=0,PreviousHeight=0,ErrorClimbrate=0,PidClimbRate=0;
-float SDM_pitch,SDM_roll,SDM_raw;
-
-
-
-
-
+float PGainH=0.2,IGainH=0,DgainH=0;
 float err_diffH,int_errH,p_termh,i_termh,d_termh,pidh,PreviousErrH;
 int PreviousFlightMode=0,StableMode=0;
 float 	RxAcc,RyAcc,RzAcc,RxGyro,RyGyro,RzGyro;
@@ -172,7 +118,7 @@ int Rstate=0;
 int ns_radio=0;
 float radioin=0;
 int tempradio_status=0;
-int ConvertedValue = 0; //Converted value readed from ADC
+
 float XErrbuffer[Logbuf];
 float M1x[Logbuf];
 float M2x[Logbuf];
@@ -191,17 +137,8 @@ int PID_Start=0;
 float m1m3_rpm,m2m4_rpm,average_rpm,m1Rcompensate,m2Rcompensate,m3Rcompensate,m4Rcompensate;
 float M1Radio_in,M2Radio_in,M3Radio_in,M4Radio_in;
 
-float DM_roll,DM_pitch,DM_raw,DM_CompAngRateX,GyroGain,DM_CompAngRateY,DM_CompAngRateZ;
+float DM_roll,DM_pitch,DM_raw,DM_CompAngRateX,GyroGain,DM_CompAngRateY;
 int16_t  DM_cmd,DM_roll_cal,DM_pitch_cal,DM_raw_cal,DM_AccelX_cal,DM_AccelY_cal,DM_AccelZ_cal,DM_CompAngRateX_cal,DM_CompAngRateY_cal,DM_CompAngRateZ_cal,DM_TimerTicks_cal,checksum;
-
-
-int sensor_value=0;
-
-float heading,lat1=1.344026,lon1,lat2,lon2,headb;
-
-
-
-
 //int16_t  DM_cmd;
 int16_t CRCvalidation=0,Gyro_sensitivity=0;
 //end Radio status state machine
@@ -268,7 +205,7 @@ int T=0;
 volatile char received_string[MAX_STRLEN+1]; // this will hold the recieved string
 //------------------Start UART Setup------------------------------
 /*
-* This funcion initializes the USART1 peripheral
+* This funcion initializes the USART3 peripheral
  *
  * Arguments: baudrate --> the baudrate at which the USART is
  * 						   supposed to operate
@@ -340,7 +277,7 @@ void fuseGyroAcc(int RxAcc0,int RyAcc0,int RzAcc0,int RxGyro0,int RyGyro0,int Rz
 	AccAngleX=acos(RxAcc)*180/PI-90;
 	AccAngleY=acos(RyAcc)*180/PI-90;
 	//--up to here from eginning is 600us----
-	 GPIOD->BSRRH = 0xF000; // reset PD1
+	// GPIOD->BSRRH = 0xF000; // reset PD1
 	 //
     if(T==0){  //time is 0, first data point , define REst at 0 time.
 	   RxEstpast= RxAcc;
@@ -449,73 +386,8 @@ int C2(float Zee){
 	return ans;
 }
 
-int ki;
-
-void print_bothIMU(){
 
 
-
-	serial_output("3DM Pitch: %c%d.%d\t",Csign(DM_pitch),C1(DM_pitch),C2(DM_pitch));
-	serial_output("3DM Roll: %c%d.%d\t",Csign(DM_roll),C1(DM_roll),C2(DM_roll));
-	serial_output("3DM RAW: %c%d.%d\t",Csign(DM_raw),C1(DM_raw),C2(DM_raw));
-
-
-	serial_output("DMP Pitch: %c%d.%d\t",Csign(PitchAngle),C1(PitchAngle),C2(PitchAngle));
-	serial_output("DMP Roll: %c%d.%d\t",Csign(RollAngle),C1(RollAngle),C2(RollAngle));
-	serial_output("DMP RAW: %c%d.%d\t",Csign(RawAngle),C1(RawAngle),C2(RawAngle));
-
-
-
-
-
-}
-
-void serialprintout(){
-
-	if(serialflag==1){
-
-
-#ifdef COMPARE_3DM_9150
-		print_bothIMU();
-#endif
-
-
-#ifdef NOTCOMPARE
-		 // MPL_LOGI("Pitch: %c%d.%d\n",Csign(SDM_pitch),C1(SDM_pitch),C2(SDM_pitch));
-		 // MPL_LOGI("Roll: %c%d.%d\n",Csign(SDM_roll),C1(SDM_roll),C2(SDM_roll));
-		 // MPL_LOGI("RAW: %c%d.%d\n",Csign(SDM_raw),C1(SDM_raw),C2(SDM_raw));
-
-		     serial_output("Roll:\t%c%d.%d\t",Csign(SDM_pitch),C1(SDM_pitch),C2(SDM_pitch));
-		  	 serial_output("Pitch:\t%c%d.%d\t",Csign(SDM_roll),C1(SDM_roll),C2(SDM_roll));
-		  	 serial_output("Raw:\t%c%d.%d\n",Csign(SDM_raw),C1(SDM_raw),C2(SDM_raw));
-
-#endif
-
-
-
-		  	serial_output("SetZ\t%c%d.%d\t",Csign(setZ),C1(setZ),C2(setZ));
-		  	serial_output("ErrZ:\t%c%d.%d\t",Csign(ErrorZ),C1(ErrorZ),C2(ErrorZ));
-		  	serial_output("Voltage \t%c%d.%d,",Csign(Batter_V),C1(Batter_V),C2(Batter_V));
-
-
-
-		  	serial_output("%c%d.%d\t",Csign(M1),C1(M1),C2(M1));
-		  	serial_output("%c%d.%d\t",Csign(M2),C1(M2),C2(M2));
-		  	serial_output("%c%d.%d\t",Csign(M3),C1(M3),C2(M3));
-		  	serial_output("%c%d.%d\t",Csign(M4),C1(M4),C2(M4));
-
-		  	serial_output("XAngle PID:\t%c%d.%d\t",Csign(pidx),C1(pidx),C2(pidx));
-		  	serial_output("YAngle PID:\t%c%d.%d\t",Csign(pidy),C1(pidy),C2(pidy));
-		  	serial_output("ZAngle PID:\t%c%d.%d\t",Csign(pidz),C1(pidz),C2(pidz));
-
-		  	serial_output("Height\t%c%d.%d cm\t",Csign(sensorheight),C1(sensorheight),C2(sensorheight));
-		    serialflag=0;
-
-		}
-
-
-
-}
 
 
 
@@ -1226,8 +1098,6 @@ int main(void)
 
 
 
-
-
   inv_error_t result;
     unsigned char accel_fsr,  new_temp = 0;
     unsigned short gyro_rate, gyro_fsr;
@@ -1433,40 +1303,6 @@ int main(void)
     mpu_set_dmp_state(1);
     hal.dmp_on = 1;
 
-#ifdef IMU_3DMONLY_ENABLE
-
-
-
-
-while(1)
-
-{
-
-	if(conttrolflag==1){
-			GPIOD->BSRRL = 0x8000; // set PD1
-		        skipIMU:
-
-		        ControlLoop();
-
-				conttrolflag=0;
-
-
-				 GPIOD->BSRRH = 0x8000; // reset PD1
-			  //  while(received_msg!=1);
-
-
-		}
-
-	serialprintout();
-
-	his_timercount=timercount;
-}
-
-
-#endif
-
-#ifdef IMU_9150_ENABLE
-
   while(1){
 
 
@@ -1635,37 +1471,37 @@ if(RX_indidate==1){
         }
 #endif
         if (new_data) {
-        	   inv_execute_on_data();
-        	            /* This function reads bias-compensated sensor data and sensor
-        	             * fusion outputs from the MPL. The outputs are formatted as seen
-        	             * in eMPL_outputs.c. This function only needs to be called at the
-        	             * rate requested by the host.
-        	             */
-        	         read_from_mpl();
-        	       //  inv_execute_on_data();
-        	         long msg, data[9];
-        	           int8_t accuracy;
-        	           unsigned long timestamp;
-        	           float float_data[3] = {0};
-        	           inv_get_sensor_type_euler(data, &accuracy,(inv_time_t*)&timestamp);
-        	     //    inv_get_sensor_type_quat(data, &accuracy, (inv_time_t*)&timestamp);
-        	       //  MPL_LOGI("Assigned Eular Angle P=%.2f Roll=%.2f Raw=%.2f\n",PitchAngle,RollAngle,RawAngle);
-        	    //     MPL_LOGI("accel: %7.4f %7.4f %7.4f\n",
-        	        //		 PitchAngle,
-        	        //		 RollAngle,
-        	        //		 RawAngle);
+            inv_execute_on_data();
+            /* This function reads bias-compensated sensor data and sensor
+             * fusion outputs from the MPL. The outputs are formatted as seen
+             * in eMPL_outputs.c. This function only needs to be called at the
+             * rate requested by the host.
+             */
+         read_from_mpl();
+       //  inv_execute_on_data();
+         long msg, data[9];
+           int8_t accuracy;
+           unsigned long timestamp;
+           float float_data[3] = {0};
+           inv_get_sensor_type_euler(data, &accuracy,(inv_time_t*)&timestamp);
+     //    inv_get_sensor_type_quat(data, &accuracy, (inv_time_t*)&timestamp);
+       //  MPL_LOGI("Assigned Eular Angle P=%.2f Roll=%.2f Raw=%.2f\n",PitchAngle,RollAngle,RawAngle);
+    //     MPL_LOGI("accel: %7.4f %7.4f %7.4f\n",
+        //		 PitchAngle,
+        //		 RollAngle,
+        //		 RawAngle);
+int a=11;
+//serial_output("M3\t%c%d.%d\t",Csign(M3x[k]),C1(M3x[k]),C2(M3x[k]));
+        MPL_LOGI("Pitch: %c%d.%d\n",Csign(PitchAngle),C1(PitchAngle),C2(PitchAngle));
+        MPL_LOGI("Roll: %c%d.%d\n",Csign(RollAngle),C1(RollAngle),C2(RollAngle));
+        MPL_LOGI("RAW: %c%d.%d\n",Csign(RawAngle),C1(RawAngle),C2(RawAngle));
 
-        	           GPIOD->BSRRH = 0xF000; // reset PD1
-        	           serialprintout();
-
-              ControlLoop();
-            //  Delay(100);
-
+              GPIOD->BSRRH = 0xF000; // reset PD1
+            Delay(100);
 
 
         }
     }
-#endif      //--IMU 9150 enabled?
 }
 
 /*---------------------------------------------------------------------------*/
@@ -1690,64 +1526,6 @@ void platform_init(void)
 //  init_USART3(9600);
 //  	init_USART2(38400);
       init_GPIO();
-      adc_configure();//Start configuration
-  	 ConvertedValue = adc_convert();//Read the ADC converted value
-     	 //   delay(100);
-     	    Batter_V=(((ConvertedValue/4096.0)*2.96)-0.20)*10.0;
-     	   InitPWM();
-     	   InitPWM2();
-     	   InitPWM3();
-     	   InitPWM4();
-
-     	   PWMinput_sound();
-     	   PWMinput_radioCH3();
-
-     	   PWMinput_radioCH6();
-     	   PWMinput_radioCH1();
-     	   PWMinput_radioCH2();
-     	   PWMinput_radioCH4();
-
-     	   InitializeTimer2();
-
-
-// 3DM Sensor---------------
-#ifdef IMU_3DM_ENABLE
-init_USART2(38400);
-#endif
-  //end 3DM sensor----------
-
-     	  init_USART4();
-     	  init_GPIO();
-     	  uint8_t received_data2=0xF0;
-     	  int sf;
-     	  for(sf=0;sf<24;sf++){
-     	  	receivedmsg[sf]=0;
-     	  }
-     	 UART2_sendbyte(0x28);
-     	 UART2_sendbyte(0x82);
-     	 expect_received=6;
-
-
-
-     	 GyroGain=(32768000/ Gyro_sensitivity);
-     	 expect_received=0;
-     	   /* This flashed the LEDs on the board once
-     	    * Two registers are used to set the pins (pin level is VCC)
-     	    * or to reset the pins (pin level is GND)
-     	    *
-     	    * BSRR stands for bit set/reset register
-     	    * it is seperated into a high and a low word (each of 16 bit size)
-     	    *
-     	    * A logical 1 in BSRRL will set the pin and a logical 1 in BSRRH will
-     	    * reset the pin. A logical 0 in either register has no effect
-     	    */
-     	  // GPIOD->BSRRL = 0xF000; // set PD1
-     	 //  Delay1(1000000L);		 // wait a short period of time
-     	   //GPIOD->BSRRH = 0xF000; // reset PD1
-
-
-     	   StartMotor=0;
-
 
 }
 
@@ -1896,6 +1674,10 @@ void assert_failed(uint8_t* file, uint32_t line)
 
 
 
+/* @brief  This function handles TIM4 global interrupt request.
+* @param  None
+* @retval None
+*/
 void TIM4_IRQHandler(void)
 {
 
@@ -1938,7 +1720,7 @@ else
 void radio_in(){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //	 serial_output("Radio signal=\t%c%d.%d\t",Csign(DutyCycle2_radio),C1(DutyCycle2_radio),C2(DutyCycle2_radio));
-        if(DutyCycle2_radio<200)
+        if(DutyCycle2_radio<20000)
         {
         	Rstate=ns_radio;
             switch(Rstate)
@@ -1970,26 +1752,14 @@ void radio_in(){
          }
 
 
-	    if((DutyCycle2_radio>180) && (DutyCycle2_radio<320))
+	    if((DutyCycle2_radio>20000) && (DutyCycle2_radio<40000))
 
 	    {
 
          //  radioin=manualradio;
 
-	    	//radioin=(((DutyCycle2_radio*10)-20000)/1.358)+8100;
-            newupdate=1;
-	    	radioin=DutyCycle2_radio;
-	    	ChangeinRadio=radioin-PreviousRadio;
-
-
-
-	    	PreviousRadio=radioin;
-	        //MXlimit= radioin*1.3;
-if(ChangeinRadio!=0){
-	        ChangeinRadio=((ChangeinRadio)/1.358)*100;
-}
-	 //  radioin=10000.00;
-	    /*
+	    radioin=((DutyCycle2_radio-20000)/1.358)+8100;
+/*
        	m2m4_rpm=(-0.0002996819 *(radioin)*(radioin)) +7.5004877*(radioin) -40913.2314;
                      		m1m3_rpm=(-0.0002740191*(radioin)*(radioin)) + 6.9107775322*(radioin) -37915.38407;
                      		average_rpm=(m1m3_rpm+m2m4_rpm)/2.0;
@@ -2046,9 +1816,47 @@ if(ChangeinRadio!=0){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 void ControlLoop(){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+          //--------Begin PID correction----------
 
 
-     /*  3DM
+/*
+
+
+
+	 GyroXvalue=(MPU9150_readSensor(MPU9150_GYRO_XOUT_L,MPU9150_GYRO_XOUT_H));
+
+
+     GyroYvalue=(MPU9150_readSensor(MPU9150_GYRO_YOUT_L,MPU9150_GYRO_YOUT_H));
+     GyroZvalue=(MPU9150_readSensor(MPU9150_GYRO_ZOUT_L,MPU9150_GYRO_ZOUT_H));
+     AccXvalue=((MPU9150_readSensor(MPU9150_ACCEL_XOUT_L,MPU9150_ACCEL_XOUT_H)));//to convert to 2nd complement -128 to 128 instead of 0-256
+     AccYvalue=((MPU9150_readSensor(MPU9150_ACCEL_YOUT_L,MPU9150_ACCEL_YOUT_H)));//to convert to 2nd complement -128 to 128 instead of 0-256
+     AccZvalue=((MPU9150_readSensor(MPU9150_ACCEL_ZOUT_L,MPU9150_ACCEL_ZOUT_H)));//to convert to 2
+
+   //  GPIOD->BSRRL = 0xF000; // set PD1
+     fuseGyroAcc(AccXvalue,AccYvalue,AccZvalue,GyroXvalue,GyroYvalue,GyroZvalue);
+  //   GPIOD->BSRRH = 0xF000; // reset PD1
+
+
+//--------- adding 3DM-GX1 as secondry IMU
+
+
+
+     	//  GPIOD->BSRRL = 0xF000; // set PD1
+
+*/
+
+
+
+     //while(received_msg==0);
+     /*
+     for(sf=0;sf<24;sf++){
+     	receivedmsg[sf]=0;
+     }
+     */
+
+
+
+     /*
       *
       * The Roll and Yaw angles have a range of –32768 to +32767 representing –180 to +180 degrees.
       * The Pitch angle has a range of –16384 to +16383 representing –90 to +90 degrees.
@@ -2068,56 +1876,84 @@ void ControlLoop(){
 
   //   GPIOD->BSRRH = 0xF000; // reset PD1
 
-#ifdef SELECT_IMU_9150
-	SDM_pitch=PitchAngle;
-	SDM_roll= RollAngle;
-	SDM_raw=RawAngle;
-#endif
 
 
-#ifdef SELECT_IMU_3DMDX2
 
+
+
+
+//----------- End adding  IMU
+
+
+	float SDM_pitch,SDM_roll;
 if(CRCvalidation==0){
 	SDM_pitch=DM_pitch;
 	SDM_roll= DM_roll;
-	SDM_raw=DM_raw;
 
+if(DM_pitch<-3){
+								int kg=0;
+								kg=kg+1;
 
+					        }
 }
-#endif
-
-if((firstime==0)&(timercount>5200)){
-
-
-		if((flightmode==0)  & (sensorheight>20)){
-		setZ=SDM_raw;
-        initialbearing=setZ;
-        firstime=1;
-		}
-
-
-
-
-	}
-
-
-
 
 
 		   ErrorX=setX-SDM_pitch;//Axr
 		   ErrorY=setY-SDM_roll;
-		   ErrorZ=setZ-SDM_raw;
+		 //  ErrorH=setheight-DutyCycle2;
 
-		   if((abs(ErrorX)>15)){ PgainX=1;}
-		   if((abs(ErrorX)>7) & (abs(ErrorX)<=15)){ PgainX=0.75;}
-		   if((abs(ErrorX)>4) & (abs(ErrorX)<=7)){ PgainX=0.6;}
-		   if((abs(ErrorX)<=3)){ PgainX=0.3;}
+           if( (flightmode==1)){
+        	   int k;
+        	   	            	float sampletime=0;
+        	   	            	  StartMotor=0;
+        	   	            		            	TIM_SetCompare1(TIM1, 8100);
+        	   	            		            	TIM_SetCompare2(TIM1, 8100);
+        	   	            		            	TIM_SetCompare3(TIM1, 8100);
+        	   	            		            	TIM_SetCompare4(TIM1, 8100);
+        	   	            		            	TIM_Cmd(TIM2, DISABLE);
+        	   	            		            	 for(k=0;k<500;k++){
 
-		   if((abs(ErrorY)>15)){ PGain=1;}
-		   if((abs(ErrorY)>7) & (abs(ErrorY)<=15)){ PGain=0.75;}
-		   if((abs(ErrorY)>4) & (abs(ErrorY)<=7)){ PGain=0.6;}
-		   if((abs(ErrorY)<=3)){ PGain=0.3;}
+        	   	            		            			                sampletime=k;
+        	   	            		            			                serial_output("%d\t",k);
+        	   	            		            			             Delay(5000);
+        	   	            		            			                serial_output("Rin:\t%c%d.%d\t",Csign(Radioinx[k]),C1(Radioinx[k]),C2(Radioinx[k]));
+        	   	            		            			             Delay(10000);
+        	   	            		            			          serial_output("CurrentX:\t%c%d.%d\t",Csign(CurrentX[k]),C1(CurrentX[k]),C2(CurrentX[k]));
+        	   	            		            			                 	   	            		            			             Delay(10000);
 
+
+        	   	            		            			                serial_output("M1\t%c%d.%d\t",Csign(M1x[k]),C1(M1x[k]),C2(M1x[k]));
+        	   	            		            			             Delay(10000);
+        	   	            		            			                serial_output("M2\t%c%d.%d\t",Csign(M2x[k]),C1(M2x[k]),C2(M2x[k]));
+        	   	            		            			             Delay(10000);
+        	   	            		            			                serial_output("M3\t%c%d.%d\t",Csign(M3x[k]),C1(M3x[k]),C2(M3x[k]));
+        	   	            		            			             Delay(10000);
+        	   	            		            			                serial_output("M4\t%c%d.%d\t",Csign(M4x[k]),C1(M4x[k]),C2(M4x[k]));
+        	   	            		            			             Delay(10000);
+        	   	            		            				           serial_output("P\t%c%d.%d\t",Csign(Ptermx[k]),C1(Ptermx[k]),C2(Ptermx[k]));
+        	   	            		            				        Delay(5000);
+        	   	            		            				           serial_output("D\t%c%d.%d\t",Csign(Dtermx[k]),C1(Dtermx[k]),C2(Dtermx[k]));
+        	   	            		            				        Delay(5000);
+        	   	            		            				           serial_output("PID:\t\t%c%d.%d\t",Csign(PIDx[k]),C1(PIDx[k]),C2(PIDx[k]));
+        	   	            		            				        Delay(5000);
+        	   	            		            				     serial_output("SetX:\t\t%c%d.%d\t",Csign(setX),C1(setX),C2(setX));
+        	   	            		            				          // serial_output("Set\t\t%c%d.%d\t",Csign(setX),C1(setX),C2(setX));
+        	   	            		            				        Delay(5000);
+        	   	            		            				     serial_output("PGain:\t\t%c%d.%d\t",Csign(PGain),C1(PGain),C2(PGain));
+        	   	            		            				        //   serial_output("PG\t\t%c%d.%d\t",Csign(PGain),C1(PGain),C2(PGain));
+        	   	            		            				        Delay(5000);
+        	   	            		            				     //      serial_output("DG\t\t%c%d.%d\t",Csign(Dgain),C1(Dgain),C2(Dgain));
+        	   	            		            				        serial_output("Dgain:\t\t%c%d.%d\t",Csign(Dgain),C1(Dgain),C2(Dgain));
+        	   	            		            				        Delay(5000);
+        	   	            		            				           serial_output("Err\t%c%d.%d\t",Csign( XErrbuffer[k]),C1(XErrbuffer[k]),C2(XErrbuffer[k]));
+
+        	   	            		            				           serial_output("\n");
+
+        	   	            			                }
+
+
+
+           }
 
 		   if((Radio_status==1)){
 
@@ -2132,17 +1968,24 @@ if((firstime==0)&(timercount>5200)){
 
 //----------------------compenstae unbalance CW and CCW -------------------------
 								float check;
+								check=(M1Radio_in+M3Radio_in+M2Radio_in+M4Radio_in)/4.0;
+						                     		  if((check>MXlimit) ||  (check<MNlimit)){
+						                     			 M1Radio_in=radioin;
+						                     			 M2Radio_in=radioin;
+						                     			 M3Radio_in=radioin;
+						                     			 M4Radio_in=radioin;
 
 
-						                     		  if(flightmode==0){
+						                     		       }
+						                     		// if((radioin>12000)){
+						                     								                     			M1Radio_in=radioin;
+						                     								                     			M2Radio_in=radioin;
+						                     								                     			M3Radio_in=radioin;
+						                     								                     			M4Radio_in=radioin;
 
-						                     			M1Radio_in=radioin;
-						                     			M2Radio_in=radioin;
-						                     			M3Radio_in=radioin;
-						                     			M4Radio_in=radioin;
 
+						                     								                     		       //}
 
-						                     		   }
 
 
 //----------------------End xx compenstae unbalance CW and CCW -------------------------
@@ -2169,32 +2012,30 @@ if((firstime==0)&(timercount>5200)){
 								PreviousErrY=ErrorY;
 
 
-//---------------------------------------------------------------
+							//	if(((ErrorY<2) && (ErrorY>-2)) && ((ErrorX<2) && (ErrorX>-2))){
+								if( ErrorX==0){
+																	 StableMode=1;
+
+																 }
+																 else
+																 {
+																	 StableMode=0;
+																 }
 
 
-								err_diffZ=(ErrorZ-PreviousErrZ)/0.02;
-								int_errZ=int_errZ + ErrorZ;
+								 if((ErrorY<2) && (ErrorY>-2)) {int_errY=0;IntErrRateY=0; }
+								 if((ErrorX<2) && (ErrorX>-2)) {int_errX=0; IntErrRateX=0;}
 
-//----------------------------------------------------------------
+								 if(StableMode==1){
 
-								p_termz=PgainZ*ErrorZ;  //2.4
-								i_termz=IgainZ*int_errZ;
-								d_termz=(DgainZ*err_diffZ);
-								pidz=p_termz+d_termz+i_termz;
-								PreviousErrZ=ErrorZ;
-//--------------------------------------------------------------
+									 if((flightmode==1)&(PreviousFlightMode!=flightmode)){   //Altitude Hold Mode just entered
+										 setheight=sensorheight;
+ 									 }
+									 PreviousFlightMode=flightmode;
+
+								 }
 
 
-
-								 if((ErrorY<1) && (ErrorY>-1)) {int_errY=0;IntErrRateY=0; }
-								 if((ErrorX<1) && (ErrorX>-1)) {int_errX=0; IntErrRateX=0;}
-								 if((ErrorZ<1) && (ErrorZ>-1)) {int_errX=0; IntErrRateX=0;}
-                                 if((abs(ErrorX) <3) & (abs(ErrorY) <3)){
-                                	 StableMode=1;
-                                 }
-                                 else {
-                                	 StableMode=0;
-								}
 
 
 //----------------- Temp disable to test Rate Gyro------------------------------------------------------------------------
@@ -2219,63 +2060,55 @@ if((firstime==0)&(timercount>5200)){
 						 //    End Rate PID XY
 
 
-								 	  //	 RatePIDZ
-								 	if(flightmode==0){
-								 	ErrRateZ=pidz-DM_CompAngRateZ;
-								 	RateZPG=1.2;
-								 	}
-								 	else{
-								 		ErrRateZ=setZ-DM_CompAngRateZ;
-								 		RateZPG=8;
-								 	}
-								 	PtermRateZ=	ErrRateZ*RateZPG;
-								 	DiffErrRateZ=ErrRateZ-PreviousErrRateZ;
-								 	DtermRateZ=DiffErrRateZ*RateZDG;
-								 	IntErrRateZ=IntErrRateZ+ErrRateZ;
-								 	ItermRateZ=RateZIG*IntErrRateZ;
-								 	PIDRateZ=PtermRateZ+DtermRateZ+ItermRateZ;
-								 							 //    End Rate PID XY
+						//		M2=radioin+PIDRateY;//;//+(GH*ErrorH); -pidx
+						//		M3=radioin+PIDRateY;//;//+(GH*ErrorH);+(GH*ErrorH); -pidx
 
 
-
+						//		M1=radioin-PIDRateY;//;//+(GH*ErrorH);+(GH*ErrorH); +pidx
+						//		M4=radioin-PIDRateY;//;//+(GH*ErrorH);+(GH*ErrorH); +pidx
+								 if(flightmode==0){
 
 
 									 if(PIDoption==0){
-									   M2= M2Radio_in-PIDRateZ;//;//+PIDRateX+PIDRateY
-									   M1= M1Radio_in+PIDRateZ;//;//+PIDRateX-PIDRateY
+									   M2= M2Radio_in+PIDRateX+PIDRateY;//;//+PIDRateY
+									   M1= M1Radio_in+PIDRateX-PIDRateY;//;//-PIDRateY
                                       //---------------XASIS -----------------------------------
-									   M3= M3Radio_in+PIDRateZ;//;//-PIDRateX+PIDRateY
-									   M4= M4Radio_in-PIDRateZ;//;//-PIDRateX-PIDRateY
+									   M3= M3Radio_in-PIDRateX+PIDRateY;//;//+PIDRateY
+									   M4= M4Radio_in-PIDRateX-PIDRateY;//;//-PIDRateY
 									 }
 									 if(PIDoption==1){
-																		   M2= M2+pidy+pidx;// M2Radio_in+pidx
-																		   M1= M1-pidy+pidx;//M1Radio_in+pidx
+																		   M2= M2Radio_in+pidx+pidy;//;//+PIDRateY
+																		   M1= M1Radio_in+pidx-pidy;//;//-PIDRateY
 									                                      //---------------XASIS -----------------------------------
-																		   M3= M3+pidy-pidx;//M3Radio_in-pidx
-																		   M4= M4-pidy-pidx;//M4Radio_in-pidx
-
-
-																		   if(sensorheight>20){
-																			   M2= M2-pidz;
-																			   M1= M1+pidz;
-																			   M3= M3+pidz;
-																			   M4= M4-pidz;
-
-																		   }
-
-
-																		   if(newupdate==1){
-
-																			   M2= M2+ChangeinRadio;// M2Radio_in+pidx
-																			   M1= M1+ChangeinRadio;//M1Radio_in+pidx
-																			   									                                      //---------------XASIS -----------------------------------
-																			   M3= M3+ChangeinRadio;//M3Radio_in-pidx
-																			   M4= M4+ChangeinRadio;//M4Radio_in-pidx
-																			   newupdate=0;
-																		   }
-
-
+																		   M3= M3Radio_in-pidx+pidy;//;//+PIDRateY
+																		   M4= M4Radio_in-pidx-pidy;//;//-PIDRateY
 																		 }
+
+
+								 }
+
+
+                                    if(flightmode==1){
+
+										ErrorH=setheight-sensorheight;
+										err_diffH=(ErrorH-PreviousErrH)/0.07;
+										int_errH=int_errH + ErrorH;
+								        p_termh=PGainH*ErrorH;  //2.4
+										i_termh=IGainH*int_errH;
+										d_termh=(DgainH*err_diffH);
+										pidh=p_termh+d_termh+i_termh;
+										PreviousErrH=ErrorH;
+
+										M1=M1+pidh;
+										M2=M2+pidh;
+										M3=M3+pidh;
+										M4=M4+pidh;
+
+
+																 }
+
+
+
 
 
 //----------------- End Temp disable to test Rate Gyro------------------------------------------------------------------------
@@ -2284,36 +2117,15 @@ if((firstime==0)&(timercount>5200)){
 	        }
                //------- if Radio is off ?------------
 
-
-		    MXlimit=M1*1.3;
 		    if(M1>(MXlimit)){ M1=MXlimit;}
-		    MXlimit=M2*1.3;
 		    if(M2>(MXlimit)){M2=MXlimit;}
-		    MXlimit=M3*1.3;
 			if(M3>(MXlimit)){M3=MXlimit;}
-			 MXlimit=M4*1.3;
             if(M4>MXlimit){M4=MXlimit;}
-
-
-
             if(M1<MNlimit){M1=MNlimit;}
 			if(M2<MNlimit){M2=MNlimit;}
 			if(M3<MNlimit){M3=MNlimit;}
             if(M4<MNlimit){M4=MNlimit;}
-
-
-            if(flightmode==1){
-
-            	 PreviousAlt_M1=M1;
-            	 PreviousAlt_M2=M2;
-            	 PreviousAlt_M3=M3;
-            	 PreviousAlt_M4=M4;
-
-
-
-            }
-
-         //---Begin only  execute if StartMotor Flag =1;
+            //---Begin only  execute if StartMotor Flag =1;
             if((StartMotor==1)& (Radio_status==1))
             {
 
@@ -2325,8 +2137,28 @@ if((firstime==0)&(timercount>5200)){
 
 
             //---End only  execute if StartMotor Flag =1;
+	            if(XErrbuf<Logbuf)
+					{
+						XErrbuffer[XErrbuf]=ErrorX;
+						M1x[XErrbuf]=M1;
+						M2x[XErrbuf]=M2;
+						M3x[XErrbuf]=M3;
+						M4x[XErrbuf]=M4;
+
+						 Ptermx[XErrbuf]=p_termx;
+						Dtermx[XErrbuf]=d_termx;
+										 Itermx[XErrbuf]=i_termx;
+										 PIDx[XErrbuf]=PIDRateX;
+										 Radioinx[XErrbuf]=radioin;
+										 CurrentX[XErrbuf]=Axr;
+					XErrbuf=XErrbuf+1;
+					}
+
+	            else
+	            {
 
 
+	            }
 
 
 }
@@ -2341,24 +2173,6 @@ if((firstime==0)&(timercount>5200)){
             		            	TIM_SetCompare4(TIM1, 8000);
 
             }
-
-
-/*
-            if(sensorheight>700){
-
-            	TIM_SetCompare1(TIM1, 12000);
-            	            		            	TIM_SetCompare2(TIM1, 12000);
-            	            		            	TIM_SetCompare3(TIM1, 12000);
-            	            		            	TIM_SetCompare4(TIM1, 12000);
-M1=8000;
-M2=8000;
-M3=8000;
-M4=8000;
-            	            		            	StartMotor=0;
-
-            }
-
-            */
 }
 //--- End Control loop--------------------------------------------------------------------------
 void TIM2_IRQHandler()
@@ -2376,60 +2190,11 @@ void TIM2_IRQHandler()
         	serialflag=1;
         }
 
-        if(timercount%400==0){
-
-        	 ConvertedValue = adc_convert();//Read the ADC converted value
-        	 Batter_V=(((ConvertedValue/4096.0)*2.96)-0.20)*10.0;
-
-
-        	 if(flightmode==1){
-
-if((sensorheight>40.00) ){
-
-	PreviousAlt_M1=PreviousAlt_M2=PreviousAlt_M3=PreviousAlt_M4=12500;
-	takeoff=1;
-
-}
-
-if((sensorheight<40.00) & (takeoff==0)){
-
-	PreviousAlt_M1=PreviousAlt_M2=PreviousAlt_M3=PreviousAlt_M4=13000;
-
-
-}
-if(StableMode){
-
-        							                     						ErrorH=setheight-sensorheight;
-        							                     						err_diffH=(ErrorH-PreviousErrH)/0.4;
-        							                     						int_errH=int_errH + ErrorH;
-        							                     						p_termh=PGainH*ErrorH;  //2.4
-        							                     						i_termh=IGainH*int_errH;
-        							                     						d_termh=(DgainH*err_diffH);
-        							                     						pidh=p_termh+d_termh+i_termh;
-        							                     						PreviousErrH=ErrorH;
-
-        							                     						//	 float setclimbrate=0.5,actualclimbrate=0;
-        							                     						actualclimbrate=(sensorheight-PreviousHeight)/0.4;
-        							                     						ErrorClimbrate=(ErrorH/8)-actualclimbrate;
-        							                     						PidClimbRate=ErrorClimbrate* CRateGain;
-        							                     						PreviousHeight=sensorheight;
-        							                     						M1Radio_in=PreviousAlt_M1+PidClimbRate;
-        							                     						M2Radio_in=PreviousAlt_M2+PidClimbRate;
-        							                     						M3Radio_in=PreviousAlt_M3+PidClimbRate;
-        							                     						M4Radio_in=PreviousAlt_M4+PidClimbRate;
-
-
-}
-
-        							                     																		 }
-               }
-
-
         if((timercount%20==0) & (timercount>5000)){
-				#ifdef IMU_3DM_ENABLE
-							  UART2_sendbyte(0x31);
-							  expect_received=1;
-				#endif
+
+        	  UART2_sendbyte(0x31);
+              expect_received=1;
+
 
         }
 
@@ -2440,8 +2205,7 @@ if(StableMode){
 
         if(timercount%20==0)
               {
-        radio_in();
-
+        	radio_in();
 
 
               	if(Radio_status==1){
@@ -2467,7 +2231,7 @@ if(StableMode){
                      }
 
         if(timercount%10000==0){
-       //     	setY=-25;
+            	setY=-25;
                }
 
 
@@ -2476,7 +2240,7 @@ if(StableMode){
                 //             }
 
                if(timercount%20000==0){
-                         		//setY=0;
+                         		setY=0;
                              }
 
 
@@ -2486,9 +2250,16 @@ if(StableMode){
 void TIM3_IRQHandler(void)
 {
 
-
 	RCC_ClocksTypeDef RCC_Clocks;
 	RCC_GetClocksFreq(&RCC_Clocks);
+	 //togglebit^=1;
+	//	  if(togglebit) GPIOD->BSRRL = 0xF000; // set PD1
+		  	 // wait a short period of time
+	//	  else GPIOD->BSRRH = 0xF000; // reset PD1
+
+	//	TIM_ICInitTypeDef  TIM_ICInitStructure;
+
+
 /* Clear TIM4 Capture compare interrupt pending bit */
 TIM_ClearITPendingBit(TIM3, TIM_IT_CC2);
 
@@ -2497,8 +2268,13 @@ IC2Value_radio = TIM_GetCapture2(TIM3);
 
 if (IC2Value_radio != 0)
 {
+  /* Duty cycle computation */
+  //DutyCycle = (TIM_GetCapture1(TIM4) * 100) / IC2Value;
   DutyCycle_radio=IC2Value_radio;
   DutyCycle2_radio=TIM_GetCapture1(TIM3);
+  /* Frequency computation
+     TIM4 counter clock = (RCC_Clocks.HCLK_Frequency)/2 */
+
   Frequency_radio = (RCC_Clocks.HCLK_Frequency)/2 / IC2Value_radio;
 }
 else
@@ -2514,127 +2290,6 @@ else
 }
 
 
-TIM8_CC_IRQHandler(void){
-
-int 	IC2Value_radio1;
-
-	RCC_ClocksTypeDef RCC_Clocks;
-	RCC_GetClocksFreq(&RCC_Clocks);
-/* Clear TIM4 Capture compare interrupt pending bit */
-TIM_ClearITPendingBit(TIM8, TIM_IT_CC2);
-
-/* Get the Input Capture value */
-IC2Value_radioCh1= TIM_GetCapture2(TIM8);
-//int IC2Value_radioCh1,DutyCycle_radio1,DutyCycle2_radio1,Frequency_radio1;
-if (IC2Value_radioCh1 != 0)
-{
-	DutyCycle_radio1=IC2Value_radioCh1;
-	DutyCycle2_radio1=TIM_GetCapture1(TIM8);
-	Frequency_radio1 = (RCC_Clocks.HCLK_Frequency)/2 / IC2Value_radioCh1;
-	if(DutyCycle2_radio1>24400){
-		setY=(DutyCycle2_radio1-24400)/456;
-
-	}
-	else
-		{
-		setY=(-1)*(24400-DutyCycle2_radio1)/456;
-		}
-
-
-
-
-}
-else
-{
-	DutyCycle_radio1 = 0;
-	Frequency_radio1 = 0;
-	DutyCycle2_radio1=0;
-}
-//serial_output("PWMwidth=%5d\t",DutyCycle2_radio);
-
-
-
-}
-
-
-TIM8_BRK_TIM12_IRQHandler(void){
-
-
-	int 	IC2Value_radio2;
-
-		RCC_ClocksTypeDef RCC_Clocks;
-		RCC_GetClocksFreq(&RCC_Clocks);
-	/* Clear TIM4 Capture compare interrupt pending bit */
-	TIM_ClearITPendingBit(TIM12, TIM_IT_CC2);
-
-	/* Get the Input Capture value */
-	IC2Value_radioCh2= TIM_GetCapture2(TIM12);
-	//int IC2Value_radioCh1,DutyCycle_radio1,DutyCycle2_radio1,Frequency_radio1;
-	if (IC2Value_radioCh2 != 0)
-	{
-		DutyCycle_radio2=IC2Value_radioCh2;
-		DutyCycle2_radio2=TIM_GetCapture1(TIM12);
-		Frequency_radio2 = (RCC_Clocks.HCLK_Frequency)/2 / IC2Value_radioCh2;
-
-		if(DutyCycle2_radio2>24400){
-				setX=((-1)*(DutyCycle2_radio2-24400)/456)+xtrim;
-
-			}
-			else
-				{
-				setX=((24400-DutyCycle2_radio2)/456)+xtrim;
-				}
-
-
-
-	}
-	else
-	{
-		DutyCycle_radio2 = 0;
-		Frequency_radio2 = 0;
-		DutyCycle2_radio2=0;
-	}
-}
-
-
-TIM1_BRK_TIM9_IRQHandler(void){
-
-
-	int 	IC2Value_radio2;
-
-		RCC_ClocksTypeDef RCC_Clocks;
-		RCC_GetClocksFreq(&RCC_Clocks);
-	/* Clear TIM4 Capture compare interrupt pending bit */
-	TIM_ClearITPendingBit(TIM9, TIM_IT_CC2);
-
-	/* Get the Input Capture value */
-	IC2Value_radioCh4= TIM_GetCapture2(TIM9);
-	//int IC2Value_radioCh1,DutyCycle_radio1,DutyCycle2_radio1,Frequency_radio1;
-	if (IC2Value_radioCh4 != 0)
-	{
-		DutyCycle_radio4=IC2Value_radioCh4;
-		DutyCycle2_radio4=TIM_GetCapture1(TIM9);
-		Frequency_radio4 = (RCC_Clocks.HCLK_Frequency)/2 / IC2Value_radioCh4;
-if(rawmanualcontrol==1){
-
-		if(DutyCycle2_radio4>24400){
-		//	setZ=((DutyCycle2_radio4-24400)/76)+initialbearing;
-
-			}
-			else
-				{
-		//	setZ=((-1)*(24400-DutyCycle2_radio4)/76)+initialbearing;
-				}
-}
-
-	}
-	else
-	{
-		DutyCycle_radio4 = 0;
-		Frequency_radio4 = 0;
-		DutyCycle2_radio4=0;
-	}
-}
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 void TIM5_IRQHandler(void)
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -2693,88 +2348,3 @@ else
 }
 }
 
-/*
- *
- *  Debug logging ---
- *
- *
-            if( (flightmode==1)){
-        	   int k;
-        	   	            	float sampletime=0;
-        	   	            	  StartMotor=0;
-        	   	            		            	TIM_SetCompare1(TIM1, 8100);
-        	   	            		            	TIM_SetCompare2(TIM1, 8100);
-        	   	            		            	TIM_SetCompare3(TIM1, 8100);
-        	   	            		            	TIM_SetCompare4(TIM1, 8100);
-        	   	            		            	TIM_Cmd(TIM2, DISABLE);
-        	   	            		            	 for(k=0;k<500;k++){
-
-        	   	            		            			                sampletime=k;
-        	   	            		            			                serial_output("%d\t",k);
-        	   	            		            			             Delay(5000);
-        	   	            		            			                serial_output("Rin:\t%c%d.%d\t",Csign(Radioinx[k]),C1(Radioinx[k]),C2(Radioinx[k]));
-        	   	            		            			             Delay(10000);
-        	   	            		            			          serial_output("CurrentX:\t%c%d.%d\t",Csign(CurrentX[k]),C1(CurrentX[k]),C2(CurrentX[k]));
-        	   	            		            			                 	   	            		            			             Delay(10000);
-
-
-        	   	            		            			                serial_output("M1\t%c%d.%d\t",Csign(M1x[k]),C1(M1x[k]),C2(M1x[k]));
-        	   	            		            			             Delay(10000);
-        	   	            		            			                serial_output("M2\t%c%d.%d\t",Csign(M2x[k]),C1(M2x[k]),C2(M2x[k]));
-        	   	            		            			             Delay(10000);
-        	   	            		            			                serial_output("M3\t%c%d.%d\t",Csign(M3x[k]),C1(M3x[k]),C2(M3x[k]));
-        	   	            		            			             Delay(10000);
-        	   	            		            			                serial_output("M4\t%c%d.%d\t",Csign(M4x[k]),C1(M4x[k]),C2(M4x[k]));
-        	   	            		            			             Delay(10000);
-        	   	            		            				           serial_output("P\t%c%d.%d\t",Csign(Ptermx[k]),C1(Ptermx[k]),C2(Ptermx[k]));
-        	   	            		            				        Delay(5000);
-        	   	            		            				           serial_output("D\t%c%d.%d\t",Csign(Dtermx[k]),C1(Dtermx[k]),C2(Dtermx[k]));
-        	   	            		            				        Delay(5000);
-        	   	            		            				           serial_output("PID:\t\t%c%d.%d\t",Csign(PIDx[k]),C1(PIDx[k]),C2(PIDx[k]));
-        	   	            		            				        Delay(5000);
-        	   	            		            				     serial_output("SetX:\t\t%c%d.%d\t",Csign(setX),C1(setX),C2(setX));
-        	   	            		            				          // serial_output("Set\t\t%c%d.%d\t",Csign(setX),C1(setX),C2(setX));
-        	   	            		            				        Delay(5000);
-        	   	            		            				     serial_output("PGain:\t\t%c%d.%d\t",Csign(PGain),C1(PGain),C2(PGain));
-        	   	            		            				        //   serial_output("PG\t\t%c%d.%d\t",Csign(PGain),C1(PGain),C2(PGain));
-        	   	            		            				        Delay(5000);
-        	   	            		            				     //      serial_output("DG\t\t%c%d.%d\t",Csign(Dgain),C1(Dgain),C2(Dgain));
-        	   	            		            				        serial_output("Dgain:\t\t%c%d.%d\t",Csign(Dgain),C1(Dgain),C2(Dgain));
-        	   	            		            				        Delay(5000);
-        	   	            		            				           serial_output("Err\t%c%d.%d\t",Csign( XErrbuffer[k]),C1(XErrbuffer[k]),C2(XErrbuffer[k]));
-
-        	   	            		            				           serial_output("\n");
-
-        	   	            			                }
-
-
-
-           }
-
- *
- *
- *if(XErrbuf<Logbuf)
-					{
-						XErrbuffer[XErrbuf]=ErrorX;
-						M1x[XErrbuf]=M1;
-						M2x[XErrbuf]=M2;
-						M3x[XErrbuf]=M3;
-						M4x[XErrbuf]=M4;
-
-						 Ptermx[XErrbuf]=p_termx;
-						Dtermx[XErrbuf]=d_termx;
-										 Itermx[XErrbuf]=i_termx;
-										 PIDx[XErrbuf]=PIDRateX;
-										 Radioinx[XErrbuf]=radioin;
-										 CurrentX[XErrbuf]=Axr;
-					XErrbuf=XErrbuf+1;
-					}
- *
- *
- *
- * */
-
-
-/*
- *
- */

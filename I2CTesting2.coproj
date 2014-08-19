@@ -10,6 +10,8 @@
         <Option name="FPU" value="1"/>
         <Includepaths>
           <Includepath path="."/>
+          <Includepath path="empl"/>
+          <Includepath path="use_dmp"/>
         </Includepaths>
         <DefinedSymbols>
           <Define name="STM32F407VG"/>
@@ -17,6 +19,9 @@
           <Define name="USE_STDPERIPH_DRIVER"/>
           <Define name="__ASSEMBLY__"/>
           <Define name="__FPU_USED"/>
+          <Define name="MPU9150"/>
+          <Define name="MPL_LOG_NDEBUG=1"/>
+          <Define name="EMPL"/>
         </DefinedSymbols>
       </Compile>
       <Link useDefault="0">
@@ -29,6 +34,7 @@
         <LinkedLibraries>
           <Libset dir="stm32f4-discovery\" libs="pdmfilter_gcc"/>
           <Libset dir="" libs="m"/>
+          <Libset dir="mpu9150\core\" libs="mpllib"/>
         </LinkedLibraries>
         <MemoryAreas debugInFlashNotRAM="1">
           <Memory name="IROM1" type="ReadOnly" size="0x00100000" startValue="0x08000000"/>
@@ -85,6 +91,7 @@
     <Component id="510" name="I2C" path="" type="2"/>
     <Component id="511" name="DMA" path="" type="2"/>
     <Component id="513" name="TIM" path="" type="2"/>
+    <Component id="514" name="ADC" path="" type="2"/>
     <Component id="515" name="DAC" path="" type="2"/>
     <Component id="517" name="USART" path="" type="2"/>
     <Component id="524" name="MISC" path="" type="2"/>
@@ -92,68 +99,148 @@
     <Component id="573" name="STM32F4-Discovery" path="" type="2"/>
   </Components>
   <Files>
-    <File name="cmsis_lib/source/stm32f4xx_gpio.c" path="cmsis_lib/source/stm32f4xx_gpio.c" type="1"/>
-    <File name="cmsis_lib/include/stm32f4xx_i2c.h" path="cmsis_lib/include/stm32f4xx_i2c.h" type="1"/>
+    <File name="MPU9150/eMPL-hal/eMPL_outputs.h" path="mpu9150/eMPL-hal/eMPL_outputs.h" type="1"/>
+    <File name="MPU9150/mllite/results_holder.h" path="mpu9150/mllite/results_holder.h" type="1"/>
+    <File name="MPU9150/driver/include/log.h" path="mpu9150/driver/include/log.h" type="1"/>
     <File name="cmsis_lib/source/stm32f4xx_usart.c" path="cmsis_lib/source/stm32f4xx_usart.c" type="1"/>
-    <File name="cmsis_lib/source/stm32f4xx_dma.c" path="cmsis_lib/source/stm32f4xx_dma.c" type="1"/>
-    <File name="cmsis_boot" path="" type="2"/>
     <File name="cmsis_lib/include/stm32f4xx_dac.h" path="cmsis_lib/include/stm32f4xx_dac.h" type="1"/>
-    <File name="STM32F4-Discovery/pdm_filter.h" path="STM32F4-Discovery/pdm_filter.h" type="1"/>
-    <File name="cmsis_lib/include/stm32f4xx_syscfg.h" path="cmsis_lib/include/stm32f4xx_syscfg.h" type="1"/>
     <File name="cmsis_lib/include/stm32f4xx_usart.h" path="cmsis_lib/include/stm32f4xx_usart.h" type="1"/>
-    <File name="STM32F4-Discovery/stm32f4_discovery.h" path="STM32F4-Discovery/stm32f4_discovery.h" type="1"/>
-    <File name="semihosting/sh_cmd.s" path="semihosting/sh_cmd.s" type="1"/>
-    <File name="cmsis_boot/stm32f4xx.h" path="cmsis_boot/stm32f4xx.h" type="1"/>
     <File name="cmsis/core_cm4_simd.h" path="cmsis/core_cm4_simd.h" type="1"/>
-    <File name="cmsis_boot/startup" path="" type="2"/>
+    <File name="cmsis_boot/stm32f4xx.h" path="cmsis_boot/stm32f4xx.h" type="1"/>
+    <File name="MPU9150/driver/stm32L" path="" type="2"/>
     <File name="cmsis_lib/source/stm32f4xx_spi.c" path="cmsis_lib/source/stm32f4xx_spi.c" type="1"/>
+    <File name="MPU9150/driver/include/uart.c" path="mpu9150/driver/include/uart.c" type="1"/>
     <File name="cmsis/core_cmFunc.h" path="cmsis/core_cmFunc.h" type="1"/>
-    <File name="cmsis/core_cm4.h" path="cmsis/core_cm4.h" type="1"/>
-    <File name="semihosting/semihosting.c" path="semihosting/semihosting.c" type="1"/>
-    <File name="cmsis_lib/source/misc.c" path="cmsis_lib/source/misc.c" type="1"/>
-    <File name="cmsis_lib/include/stm32f4xx_tim.h" path="cmsis_lib/include/stm32f4xx_tim.h" type="1"/>
+    <File name="MPU9150/mllite/storage_manager.h" path="mpu9150/mllite/storage_manager.h" type="1"/>
+    <File name="MPU9150/mllite/storage_manager.c" path="mpu9150/mllite/storage_manager.c" type="1"/>
     <File name="syscalls/syscalls.c" path="syscalls/syscalls.c" type="1"/>
-    <File name="cmsis_lib/source/stm32f4xx_i2c.c" path="cmsis_lib/source/stm32f4xx_i2c.c" type="1"/>
-    <File name="cmsis_lib/source" path="" type="2"/>
+    <File name="MPU9150/driver/include/mlos.h" path="mpu9150/driver/include/mlos.h" type="1"/>
+    <File name="MPU9150/core/gyro_tc.h" path="mpu9150/core/gyro_tc.h" type="1"/>
+    <File name="MPU9150/mpl/quaternion_supervisor.h" path="mpu9150/mpl/quaternion_supervisor.h" type="1"/>
+    <File name="MPU9150/mpl/gyro_tc.h" path="mpu9150/mpl/gyro_tc.h" type="1"/>
+    <File name="MPU9150/driver/include/mlinclude.h" path="mpu9150/driver/include/mlinclude.h" type="1"/>
+    <File name="MPU9150/eMPL-hal/eMPL_outputs.c" path="mpu9150/eMPL-hal/eMPL_outputs.c" type="1"/>
     <File name="STM32F4-Discovery/stm32f4_discovery_lis302dl.h" path="STM32F4-Discovery/stm32f4_discovery_lis302dl.h" type="1"/>
-    <File name="cmsis_boot/stm32f4xx_conf.h" path="cmsis_boot/stm32f4xx_conf.h" type="1"/>
+    <File name="MPU9150/mllite/data_builder.c" path="mpu9150/mllite/data_builder.c" type="1"/>
     <File name="cmsis_lib/source/stm32f4xx_dac.c" path="cmsis_lib/source/stm32f4xx_dac.c" type="1"/>
-    <File name="cmsis_boot/system_stm32f4xx.h" path="cmsis_boot/system_stm32f4xx.h" type="1"/>
+    <File name="MPU9150/core/mag_disturb.h" path="mpu9150/core/mag_disturb.h" type="1"/>
+    <File name="MPU9150/mllite/ml_math_func.h" path="mpu9150/mllite/ml_math_func.h" type="1"/>
     <File name="Global_variables.h" path="Global_variables.h" type="1"/>
-    <File name="setup_hardware.c" path="setup_hardware.c" type="1"/>
     <File name="stdio/printf.c" path="stdio/printf.c" type="1"/>
+    <File name="setup_hardware.c" path="setup_hardware.c" type="1"/>
     <File name="cmsis_lib/include/stm32f4xx_rcc.h" path="cmsis_lib/include/stm32f4xx_rcc.h" type="1"/>
+    <File name="MPU9150/mllite" path="" type="2"/>
     <File name="cmsis_lib/source/stm32f4xx_syscfg.c" path="cmsis_lib/source/stm32f4xx_syscfg.c" type="1"/>
+    <File name="MPU9150/core/libmpllib.a" path="mpu9150/core/libmpllib.a" type="1"/>
+    <File name="MPU9150/mllite/mlmath.c" path="mpu9150/mllite/mlmath.c" type="1"/>
     <File name="fuseAccGyro.c" path="fuseAccGyro.c" type="1"/>
     <File name="cmsis_lib/include/stm32f4xx_pwr.h" path="cmsis_lib/include/stm32f4xx_pwr.h" type="1"/>
+    <File name="MPU9150/mpl/invensense_adv.h" path="mpu9150/mpl/invensense_adv.h" type="1"/>
+    <File name="MPU9150/driver/include/mltypes.h" path="mpu9150/driver/include/mltypes.h" type="1"/>
     <File name="STM32F4-Discovery/stm32f4_discovery_lis302dl.c" path="STM32F4-Discovery/stm32f4_discovery_lis302dl.c" type="1"/>
-    <File name="stm32f4xx_it.h" path="stm32f4xx_it.h" type="1"/>
     <File name="stdio" path="" type="2"/>
     <File name="cmsis_boot/startup/startup_stm32f4xx.c" path="cmsis_boot/startup/startup_stm32f4xx.c" type="1"/>
     <File name="cmsis_lib/source/stm32f4xx_rcc.c" path="cmsis_lib/source/stm32f4xx_rcc.c" type="1"/>
+    <File name="MPU9150/core" path="" type="2"/>
     <File name="cmsis/core_cmInstr.h" path="cmsis/core_cmInstr.h" type="1"/>
+    <File name="MPU9150/mllite/message_layer.c" path="mpu9150/mllite/message_layer.c" type="1"/>
     <File name="STM32F4-Discovery/stm32f4_discovery_audio_codec.c" path="STM32F4-Discovery/stm32f4_discovery_audio_codec.c" type="1"/>
     <File name="cmsis_lib/source/stm32f4xx_pwr.c" path="cmsis_lib/source/stm32f4xx_pwr.c" type="1"/>
     <File name="stm32f4_discovery_callbacks.c" path="stm32f4_discovery_callbacks.c" type="1"/>
-    <File name="semihosting" path="" type="2"/>
-    <File name="cmsis_lib/include/MPU9150.h" path="MPU9150.h" type="1"/>
-    <File name="cmsis_lib/source/stm32f4xx_exti.c" path="cmsis_lib/source/stm32f4xx_exti.c" type="1"/>
-    <File name="cmsis_lib/include/stm32f4xx_exti.h" path="cmsis_lib/include/stm32f4xx_exti.h" type="1"/>
+    <File name="cmsis_lib/include/stm32f4xx_adc.h" path="cmsis_lib/include/stm32f4xx_adc.h" type="1"/>
     <File name="cmsis_boot/system_stm32f4xx.c" path="cmsis_boot/system_stm32f4xx.c" type="1"/>
-    <File name="STM32F4-Discovery/libPDMFilter_GCC.a" path="STM32F4-Discovery/libPDMFilter_GCC.a" type="1"/>
     <File name="cmsis_lib/include/stm32f4xx_spi.h" path="cmsis_lib/include/stm32f4xx_spi.h" type="1"/>
+    <File name="MPU9150/core/no_gyro_fusion.h" path="mpu9150/core/no_gyro_fusion.h" type="1"/>
+    <File name="MPU9150/mllite/data_builder.h" path="mpu9150/mllite/data_builder.h" type="1"/>
+    <File name="MPU9150/mpl/motion_no_motion.h" path="mpu9150/mpl/motion_no_motion.h" type="1"/>
     <File name="cmsis" path="" type="2"/>
     <File name="STM32F4-Discovery/stm32f4_discovery_audio_codec.h" path="STM32F4-Discovery/stm32f4_discovery_audio_codec.h" type="1"/>
     <File name="cmsis_lib" path="" type="2"/>
+    <File name="MPU9150/mllite/invensense.h" path="mpu9150/mllite/invensense.h" type="1"/>
+    <File name="MPU9150/driver" path="" type="2"/>
+    <File name="MPU9150/core/inv_math.h" path="mpu9150/core/inv_math.h" type="1"/>
+    <File name="MPU9150/driver/include/uart.h" path="mpu9150/driver/include/uart.h" type="1"/>
+    <File name="MPU9150/core/compass_vec_cal.h" path="mpu9150/core/compass_vec_cal.h" type="1"/>
+    <File name="cmsis_lib/include/misc.h" path="cmsis_lib/include/misc.h" type="1"/>
+    <File name="STM32F4-Discovery" path="" type="2"/>
+    <File name="MPU9150/mpl" path="" type="2"/>
+    <File name="MPU9150/core/heading_from_gyro.h" path="mpu9150/core/heading_from_gyro.h" type="1"/>
+    <File name="MPU9150/core/accel_auto_cal.h" path="mpu9150/core/accel_auto_cal.h" type="1"/>
+    <File name="main.c" path="main.c" type="1"/>
+    <File name="MPU9150/mllite/results_holder.c" path="mpu9150/mllite/results_holder.c" type="1"/>
+    <File name="MPU9150/mllite/message_layer.h" path="mpu9150/mllite/message_layer.h" type="1"/>
+    <File name="MPU9150/core/motion_no_motion.h" path="mpu9150/core/motion_no_motion.h" type="1"/>
+    <File name="MPU9150/mpl/no_gyro_fusion.h" path="mpu9150/mpl/no_gyro_fusion.h" type="1"/>
+    <File name="cmsis_lib/source/stm32f4xx_gpio.c" path="cmsis_lib/source/stm32f4xx_gpio.c" type="1"/>
+    <File name="MPU9150/core/fusion_9axis.h" path="mpu9150/core/fusion_9axis.h" type="1"/>
+    <File name="cmsis_lib/include/stm32f4xx_i2c.h" path="cmsis_lib/include/stm32f4xx_i2c.h" type="1"/>
+    <File name="cmsis_lib/source/stm32f4xx_dma.c" path="cmsis_lib/source/stm32f4xx_dma.c" type="1"/>
+    <File name="MPU9150/driver/include/i2c.c" path="mpu9150/driver/include/i2c.c" type="1"/>
+    <File name="MPU9150/mpl/mag_disturb.h" path="mpu9150/mpl/mag_disturb.h" type="1"/>
+    <File name="cmsis_boot" path="" type="2"/>
+    <File name="STM32F4-Discovery/pdm_filter.h" path="STM32F4-Discovery/pdm_filter.h" type="1"/>
+    <File name="cmsis_lib/include/stm32f4xx_syscfg.h" path="cmsis_lib/include/stm32f4xx_syscfg.h" type="1"/>
+    <File name="MPU9150/mpl/fast_no_motion.h" path="mpu9150/mpl/fast_no_motion.h" type="1"/>
+    <File name="MPU9150/driver/include/gpio.h" path="mpu9150/driver/include/gpio.h" type="1"/>
+    <File name="STM32F4-Discovery/stm32f4_discovery.h" path="STM32F4-Discovery/stm32f4_discovery.h" type="1"/>
+    <File name="semihosting/sh_cmd.s" path="semihosting/sh_cmd.s" type="1"/>
+    <File name="cmsis_boot/startup" path="" type="2"/>
+    <File name="cmsis/core_cm4.h" path="cmsis/core_cm4.h" type="1"/>
+    <File name="semihosting/semihosting.c" path="semihosting/semihosting.c" type="1"/>
+    <File name="MPU9150/driver/stm32L/packet.h" path="mpu9150/driver/stm32L/packet.h" type="1"/>
+    <File name="MPU9150/mllite/start_manager.c" path="mpu9150/mllite/start_manager.c" type="1"/>
+    <File name="MPU9150/driver/include/mpu.h" path="mpu9150/driver/include/mpu.h" type="1"/>
+    <File name="cmsis_lib/source/misc.c" path="cmsis_lib/source/misc.c" type="1"/>
+    <File name="cmsis_lib/source/stm32f4xx_adc.c" path="cmsis_lib/source/stm32f4xx_adc.c" type="1"/>
+    <File name="cmsis_lib/include/stm32f4xx_tim.h" path="cmsis_lib/include/stm32f4xx_tim.h" type="1"/>
+    <File name="MPU9150/driver/eMPL/dmpmap.h" path="mpu9150/driver/eMPL/dmpmap.h" type="1"/>
+    <File name="cmsis_lib/source/stm32f4xx_i2c.c" path="cmsis_lib/source/stm32f4xx_i2c.c" type="1"/>
+    <File name="MPU9150/mpl/compass_vec_cal.h" path="mpu9150/mpl/compass_vec_cal.h" type="1"/>
+    <File name="cmsis_lib/source" path="" type="2"/>
+    <File name="MPU9150/mpl/accel_auto_cal.h" path="mpu9150/mpl/accel_auto_cal.h" type="1"/>
+    <File name="MPU9150/driver/eMPL" path="" type="2"/>
+    <File name="MPU9150/core/invensense_adv.h" path="mpu9150/core/invensense_adv.h" type="1"/>
+    <File name="cmsis_boot/stm32f4xx_conf.h" path="cmsis_boot/stm32f4xx_conf.h" type="1"/>
+    <File name="cmsis_boot/system_stm32f4xx.h" path="cmsis_boot/system_stm32f4xx.h" type="1"/>
+    <File name="MPU9150/eMPL-hal" path="" type="2"/>
+    <File name="MPU9150/mllite/hal_outputs.c" path="mpu9150/mllite/hal_outputs.c" type="1"/>
+    <File name="MPU9150/mllite/start_manager.h" path="mpu9150/mllite/start_manager.h" type="1"/>
+    <File name="MPU9150/inc" path="" type="2"/>
+    <File name="MPU9150/driver/eMPL/dmpKey.h" path="mpu9150/driver/eMPL/dmpKey.h" type="1"/>
+    <File name="MPU9150/driver/include/i2c.h" path="mpu9150/driver/include/i2c.h" type="1"/>
+    <File name="MPU9150/driver/eMPL/inv_mpu.h" path="mpu9150/driver/eMPL/inv_mpu.h" type="1"/>
+    <File name="stm32f4xx_it.h" path="stm32f4xx_it.h" type="1"/>
+    <File name="MPU9150" path="" type="2"/>
+    <File name="cmsis_lib/source/stm32f4xx_it.c" path="cmsis_lib/source/stm32f4xx_it.c" type="1"/>
+    <File name="semihosting" path="" type="2"/>
+    <File name="cmsis_lib/include/MPU9150.h" path="MPU9150.h" type="1"/>
+    <File name="MPU9150/driver/include/mlmath.h" path="mpu9150/driver/include/mlmath.h" type="1"/>
+    <File name="cmsis_lib/source/stm32f4xx_exti.c" path="cmsis_lib/source/stm32f4xx_exti.c" type="1"/>
+    <File name="cmsis_lib/include/stm32f4xx_exti.h" path="cmsis_lib/include/stm32f4xx_exti.h" type="1"/>
+    <File name="STM32F4-Discovery/libPDMFilter_GCC.a" path="STM32F4-Discovery/libPDMFilter_GCC.a" type="1"/>
+    <File name="MPU9150/mllite/hal_outputs.h" path="mpu9150/mllite/hal_outputs.h" type="1"/>
+    <File name="MPU9150/mllite/mpl.h" path="mpu9150/mllite/mpl.h" type="1"/>
+    <File name="MPU9150/driver/eMPL/inv_mpu_dmp_motion_driver.c" path="mpu9150/driver/eMPL/inv_mpu_dmp_motion_driver.c" type="1"/>
+    <File name="MPU9150/driver/eMPL/inv_mpu_dmp_motion_driver.h" path="mpu9150/driver/eMPL/inv_mpu_dmp_motion_driver.h" type="1"/>
+    <File name="MPU9150/mllite/mpl.c" path="mpu9150/mllite/mpl.c" type="1"/>
+    <File name="MPU9150/core/fast_no_motion.h" path="mpu9150/core/fast_no_motion.h" type="1"/>
+    <File name="MPU9150/driver/eMPL/inv_mpu.c" path="mpu9150/driver/eMPL/inv_mpu.c" type="1"/>
+    <File name="MPU9150/core/quaternion_supervisor.h" path="mpu9150/core/quaternion_supervisor.h" type="1"/>
+    <File name="MPU9150/mpl/fusion_9axis.h" path="mpu9150/mpl/fusion_9axis.h" type="1"/>
     <File name="cmsis_lib/include/stm32f4xx_dma.h" path="cmsis_lib/include/stm32f4xx_dma.h" type="1"/>
     <File name="cmsis_lib/source/stm32f4xx_tim.c" path="cmsis_lib/source/stm32f4xx_tim.c" type="1"/>
     <File name="cmsis_lib/include/stm32f4xx_gpio.h" path="cmsis_lib/include/stm32f4xx_gpio.h" type="1"/>
+    <File name="MPU9150/driver/include/stdint_invensense.h" path="mpu9150/driver/include/stdint_invensense.h" type="1"/>
     <File name="syscalls" path="" type="2"/>
-    <File name="cmsis_lib/include/misc.h" path="cmsis_lib/include/misc.h" type="1"/>
-    <File name="STM32F4-Discovery" path="" type="2"/>
+    <File name="MPU9150/mllite/ml_math_func.c" path="mpu9150/mllite/ml_math_func.c" type="1"/>
+    <File name="MPU9150/driver/include/main.h" path="mpu9150/driver/include/main.h" type="1"/>
+    <File name="MPU9150/mpl/heading_from_gyro.h" path="mpu9150/mpl/heading_from_gyro.h" type="1"/>
     <File name="cmsis_lib/include" path="" type="2"/>
     <File name="semihosting/semihosting.h" path="semihosting/semihosting.h" type="1"/>
-    <File name="main.c" path="main.c" type="1"/>
+    <File name="MPU9150/driver/stm32L/log_stm32l.c" path="mpu9150/driver/stm32L/log_stm32l.c" type="1"/>
     <File name="STM32F4-Discovery/stm32f4_discovery.c" path="STM32F4-Discovery/stm32f4_discovery.c" type="1"/>
+    <File name="MPU9150/driver/include" path="" type="2"/>
+    <File name="MPU9150/mpl/inv_math.h" path="mpu9150/mpl/inv_math.h" type="1"/>
+    <File name="MPU9150/driver/include/gpio.c" path="mpu9150/driver/include/gpio.c" type="1"/>
   </Files>
 </Project>
